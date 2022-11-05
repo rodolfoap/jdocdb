@@ -1,5 +1,5 @@
 package jdocdb
-import("encoding/json"; "fmt"; "io/ioutil"; "os"; "path/filepath"; "reflect"; "strings";)
+import("encoding/json"; "fmt"; "io/ioutil"; "os"; "path/filepath"; "reflect"; "strings"; b "github.com/rodolfoap/bolster";)
 
 type Register struct {
 	Id   string
@@ -16,9 +16,12 @@ func Insert[T interface{}](id string, doc T) {
 	table:=filepath.Clean(GetType(doc))
 	os.MkdirAll(table, 0755)
 	jsonPath:=filepath.Join(table, id+".json")
-	jsonBytes, _:=json.MarshalIndent(reg, "", "\t")
+	jsonBytes, err:=json.MarshalIndent(reg, "", "\t")
+	b.Error(err)
 	jsonBytes=append(jsonBytes, byte('\n'))
-	ioutil.WriteFile(jsonPath, jsonBytes, 0644)
+	err=ioutil.WriteFile(jsonPath, jsonBytes, 0644)
+	b.Fatal(err)
+	b.Trace("Bolster: INSERT: ", id, doc)
 }
 
 //Selects one registry from a table using its ID
@@ -26,8 +29,10 @@ func Select[T interface{}](id string, doc T) T {
 	reg:=Register{Id: id, Data: &doc}
 	table:=filepath.Clean(GetType(doc))
 	jsonPath:=filepath.Join(table, id+".json")
-	jsonBytes, _:=ioutil.ReadFile(jsonPath)
+	jsonBytes, err:=ioutil.ReadFile(jsonPath)
+	b.Fatal(err)
 	json.Unmarshal(jsonBytes, &reg)
+	b.Trace("Bolster: SELECT: ", id, doc)
 	return doc
 }
 
@@ -35,12 +40,14 @@ func Select[T interface{}](id string, doc T) T {
 func SelectIds[T interface{}](doc T) []string {
 	idList:=[]string{}
 	table:=filepath.Clean(GetType(doc))
-	fileList, _:=ioutil.ReadDir(table)
+	fileList, err:=ioutil.ReadDir(table)
+	b.Fatal(err)
 	for _, f:=range fileList {
 		if strings.HasSuffix(f.Name(), ".json") {
 			idList=append(idList, strings.TrimSuffix(f.Name(), ".json"))
 		}
 	}
+	b.Trace("Bolster: SELECT_IDS: ", idList)
 	return idList
 }
 
@@ -50,6 +57,7 @@ func SelectAll[T interface{}](doc T) map[string]T {
 	for _, id:=range SelectIds(doc) {
 		docs[id]=Select(id, doc)
 	}
+	b.Trace("Bolster: SELECT_ALL: ", docs)
 	return docs
 }
 
@@ -81,5 +89,6 @@ func SelectFilter[T interface{}](doc T, cond map[string]string) map[string]T {
 			docs[id]=one
 		}
 	}
+	b.Trace("Bolster: SELECT_FILTER: ", docs)
 	return docs
 }
