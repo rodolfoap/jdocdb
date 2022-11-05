@@ -10,10 +10,10 @@ func GetType(doc interface{}) string {
 	return strings.ToLower(strings.SplitN(fmt.Sprintf("%T", doc), ".", 2)[1])
 }
 
-// Inserts one registry into a table using its ID
-func Insert[T interface{}](id string, doc T) {
+// Inserts one registry into a table using its ID, preffix is a set of dir/subdirectories
+func Insert[T interface{}](id string, doc T, preffix ...string) {
 	reg:=Register{Id: id, Data: doc}
-	table:=filepath.Clean(GetType(doc))
+	table:=filepath.Clean(strings.Join(append(preffix, GetType(doc)), "/"))
 	os.MkdirAll(table, 0755)
 	jsonPath:=filepath.Join(table, id+".json")
 	jsonBytes, err:=json.MarshalIndent(reg, "", "\t")
@@ -24,10 +24,10 @@ func Insert[T interface{}](id string, doc T) {
 	b.Trace("Bolster: INSERT: ", id, doc)
 }
 
-//Selects one registry from a table using its ID
-func Select[T interface{}](id string, doc T) T {
+//Selects one registry from a table using its ID, preffix is a set of dir/subdirectories
+func Select[T interface{}](id string, doc T, preffix ...string) T {
 	reg:=Register{Id: id, Data: &doc}
-	table:=filepath.Clean(GetType(doc))
+	table:=filepath.Clean(strings.Join(append(preffix, GetType(doc)), "/"))
 	jsonPath:=filepath.Join(table, id+".json")
 	jsonBytes, err:=ioutil.ReadFile(jsonPath)
 	b.Fatal(err)
@@ -36,10 +36,10 @@ func Select[T interface{}](id string, doc T) T {
 	return doc
 }
 
-// Select all IDs of a table
-func SelectIds[T interface{}](doc T) []string {
+// Select all IDs of a table, preffix is a set of dir/subdirectories
+func SelectIds[T interface{}](doc T, preffix ...string) []string {
 	idList:=[]string{}
-	table:=filepath.Clean(GetType(doc))
+	table:=filepath.Clean(strings.Join(append(preffix, GetType(doc)), "/"))
 	fileList, err:=ioutil.ReadDir(table)
 	b.Fatal(err)
 	for _, f:=range fileList {
@@ -51,11 +51,11 @@ func SelectIds[T interface{}](doc T) []string {
 	return idList
 }
 
-// Selects all rows from a table
-func SelectAll[T interface{}](doc T) map[string]T {
+// Selects all rows from a table, preffix is a set of dir/subdirectories
+func SelectAll[T interface{}](doc T, preffix ...string) map[string]T {
 	docs:=map[string]T{}
-	for _, id:=range SelectIds(doc) {
-		docs[id]=Select(id, doc)
+	for _, id:=range SelectIds(doc, preffix...) {
+		docs[id]=Select(id, doc, preffix...)
 	}
 	b.Trace("Bolster: SELECT_ALL: ", docs)
 	return docs
@@ -66,11 +66,11 @@ func neat(value interface{}) string {
 	return strings.ToLower(strings.TrimSpace(fmt.Sprintf("%v", value)))
 }
 
-// Selects all rows that meet some conditions
-func SelectFilter[T interface{}](doc T, cond map[string]string) map[string]T {
+// Selects all rows that meet some conditions, preffix is a set of dir/subdirectories
+func SelectFilter[T interface{}](doc T, cond map[string]string, preffix ...string) map[string]T {
 	docs:=map[string]T{}
 	// Loop all documents of the table
-	for id, one:=range SelectAll(doc) {
+	for id, one:=range SelectAll(doc, preffix...) {
 		accept:=true
 		v:=reflect.ValueOf(one)
 		// Now, loop the fields

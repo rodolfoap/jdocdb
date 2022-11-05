@@ -3,7 +3,7 @@ touch .edit; MISSING=$(find . -type f -name \*.go|grep -v -f .edit); [ -z "${MIS
 execute(){
 	rm -f golib
 	go mod tidy
-	go test -v
+	BDEBUG=1 go test -v
 }
 tagversion(){
 	# Always increase VERSION
