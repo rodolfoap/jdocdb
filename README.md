@@ -1,12 +1,14 @@
-# jdocdb: A Json Documents Database
+# jdocdb: A JSON File-documents Database
 
-This is a minimalist file-based json documents database. Tables are subdirectories, and registries are files, names as its ID. That's it.
+This is a minimalist file-based JSON documents database. Tables are subdirectories, registries are files, filenames are registry IDs. That's it.
 
 ## TODO
 
 * Needs to be thread-safe
 * Needs error handling
 * Needs some logging
+* SELECT needs to be improved, the reflection loop is fragile and could fail under heavy conditions
+* Needs better SELECT comparison operators, maybe passing functions
 
 ## Example usage
 
@@ -37,6 +39,14 @@ func main() {
 	db.Insert("q9823", Person{"Jonas", 44, true})
 	db.Insert("r8791", Person{"Jonna", 55, false})
 	db.Insert("n9878", Person{"Junge", 55, true})
+	/* Now, we have:
+	.
+	└── person
+	    ├── n9878.json
+	    ├── p0926.json
+	    ├── q9823.json
+	    └── r8791.json
+	*/
 
 	/* Usage: Select(KEY, EMPTY_STRUCT) */
 	jonas:=db.Select("q9823", Person{})
