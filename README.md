@@ -11,6 +11,17 @@ This is a minimalist file-based json documents database. Tables are subdirectori
 ## Example usage
 
 ```
+package main
+import("fmt";   db "github.com/rodolfoap/jdocdb";)
+
+type Person struct {
+        Name string
+        Age  int
+        Sex  bool
+}
+
+func main() {
+
 	/*: Usage: Insert(KEY, STRUCT) */
 	db.Insert("p0926", Person{"James", 33, false})
 	/* Will produce the following file: ./person/p0926.json:
@@ -55,4 +66,5 @@ This is a minimalist file-based json documents database. Tables are subdirectori
 	filtered=db.SelectFilter(Person{}, map[string]string{"Sex": "true", "Age": "55"})
 	// map[n9878:{Junge 55 true}]
 	fmt.Println(filtered)
+}
 ```
