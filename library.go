@@ -6,15 +6,28 @@ type Register struct {
 	Data interface{}
 }
 
-// Returns a lowercase string with the type
-func GetType(doc interface{}) string {
-	return strings.ToLower(strings.SplitN(fmt.Sprintf("%T", doc), ".", 2)[1])
+// Prefix and suffix handling:
+//	0. prefix_suffix ...string is [prefix, suffix, ignored, ignored...]string
+//	   in other words, prefix==prefix_suffix[0], suffix==prefix_suffix[1]
+//	1. If NO PREFIX is specified, the path will be ./person/
+//	2. If PREFIX=data, the path will be ./data/person/
+//	3. If SUFFIX=people, the path will be ./data/people/
+func buildPath(baseName string, prefix_suffix ...string) string {
+	prefix, suffix:="", baseName
+	if len(prefix_suffix)>0 {
+		prefix=prefix_suffix[0]
+	}
+	if len(prefix_suffix)>1 {
+		suffix=prefix_suffix[1]
+	}
+	buildPath:=filepath.Clean(filepath.Join(prefix, suffix))+"/"
+	return buildPath
 }
 
-// Inserts one registry into a table using its ID, preffix is a set of dir/subdirectories
-func Insert[T interface{}](id string, doc T, preffix ...string) {
+// Inserts one registry into a table using its ID, prefix is a set of dir/subdirectories
+func Insert[T interface{}](id string, doc T, prefix ...string) {
 	reg:=Register{Id: id, Data: doc}
-	table:=filepath.Clean(strings.Join(append(preffix, GetType(doc)), "/"))
+	table:=buildPath(GetType(doc), prefix...)
 	os.MkdirAll(table, 0755)
 	jsonPath:=filepath.Join(table, id+".json")
 	jsonBytes, err:=json.MarshalIndent(reg, "", "\t")
@@ -25,10 +38,10 @@ func Insert[T interface{}](id string, doc T, preffix ...string) {
 	b.Trace("JDocDB INSERT: ", id, ": ", jsonPath)
 }
 
-//Selects one registry from a table using its ID, preffix is a set of dir/subdirectories
-func Select[T interface{}](id string, doc T, preffix ...string) T {
+//Selects one registry from a table using its ID, prefix is a set of dir/subdirectories
+func Select[T interface{}](id string, doc T, prefix ...string) T {
 	reg:=Register{Id: id, Data: &doc}
-	table:=filepath.Clean(strings.Join(append(preffix, GetType(doc)), "/"))
+	table:=buildPath(GetType(doc), prefix...)
 	jsonPath:=filepath.Join(table, id+".json")
 	jsonBytes, err:=ioutil.ReadFile(jsonPath)
 	b.Fatal(err)
@@ -38,10 +51,10 @@ func Select[T interface{}](id string, doc T, preffix ...string) T {
 	return doc
 }
 
-// Select all IDs of a table, preffix is a set of dir/subdirectories
-func SelectIds[T interface{}](doc T, preffix ...string) []string {
+// Select all IDs of a table, prefix is a set of dir/subdirectories
+func SelectIds[T interface{}](doc T, prefix ...string) []string {
 	idList:=[]string{}
-	table:=filepath.Clean(strings.Join(append(preffix, GetType(doc)), "/"))
+	table:=buildPath(GetType(doc), prefix...)
 	fileList, err:=ioutil.ReadDir(table)
 	b.Fatal(err)
 	for _, f:=range fileList {
@@ -50,18 +63,23 @@ func SelectIds[T interface{}](doc T, preffix ...string) []string {
 			idList=append(idList, strings.TrimSuffix(f.Name(), ".json"))
 		}
 	}
-	b.Trace("JDocDB SELECT_IDS: ", idList, table)
+	b.Trace("JDocDB SELECT_IDS: ", idList, ": ", table)
 	return idList
 }
 
-// Selects all rows from a table, preffix is a set of dir/subdirectories
-func SelectAll[T interface{}](doc T, preffix ...string) map[string]T {
+// Selects all rows from a table, prefix is a set of dir/subdirectories
+func SelectAll[T interface{}](doc T, prefix ...string) map[string]T {
 	docs:=map[string]T{}
-	for _, id:=range SelectIds(doc, preffix...) {
-		docs[id]=Select(id, doc, preffix...)
+	for _, id:=range SelectIds(doc, prefix...) {
+		docs[id]=Select(id, doc, prefix...)
 	}
 	b.Trace("JDocDB SELECT_ALL: ", docs)
 	return docs
+}
+
+// Returns a lowercase string with the type
+func GetType(doc interface{}) string {
+	return strings.ToLower(strings.SplitN(fmt.Sprintf("%T", doc), ".", 2)[1])
 }
 
 // Cleans up strings for comparison
@@ -69,11 +87,11 @@ func neat(value interface{}) string {
 	return strings.ToLower(strings.TrimSpace(fmt.Sprintf("%v", value)))
 }
 
-// Selects all rows that meet some conditions, preffix is a set of dir/subdirectories
-func SelectFilter[T interface{}](doc T, cond map[string]string, preffix ...string) map[string]T {
+// Selects all rows that meet some conditions, prefix is a set of dir/subdirectories
+func SelectFilter[T interface{}](doc T, cond map[string]string, prefix ...string) map[string]T {
 	docs:=map[string]T{}
 	// Loop all documents of the table
-	for id, one:=range SelectAll(doc, preffix...) {
+	for id, one:=range SelectAll(doc, prefix...) {
 		accept:=true
 		v:=reflect.ValueOf(one)
 		// Now, loop the fields
