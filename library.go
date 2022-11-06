@@ -44,9 +44,9 @@ func Select[T interface{}](id string, doc T, prefix ...string) T {
 	table:=buildPath(GetType(doc), prefix...)
 	jsonPath:=filepath.Join(table, id+".json")
 	jsonBytes, err:=ioutil.ReadFile(jsonPath)
-	b.Fatal(err)
+	b.Error(err)
 	err=json.Unmarshal(jsonBytes, &reg)
-	b.Fatal(err)
+	b.Error(err)
 	b.Trace("JDocDB SELECT: ", id, ": ", jsonPath)
 	return doc
 }
@@ -56,7 +56,7 @@ func SelectIds[T interface{}](doc T, prefix ...string) []string {
 	idList:=[]string{}
 	table:=buildPath(GetType(doc), prefix...)
 	fileList, err:=ioutil.ReadDir(table)
-	b.Fatal(err)
+	b.Error(err)
 	for _, f:=range fileList {
 		if strings.HasSuffix(f.Name(), ".json") {
 			b.Trace("JDocDB SELECT_IDS: found: ", f.Name())
