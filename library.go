@@ -21,7 +21,7 @@ func Insert[T interface{}](id string, doc T, preffix ...string) {
 	jsonBytes=append(jsonBytes, byte('\n'))
 	err=ioutil.WriteFile(jsonPath, jsonBytes, 0644)
 	b.Fatal(err)
-	b.Trace("Bolster: INSERT: ", id, doc)
+	b.Trace("Bolster: INSERT: ", id, ": ", jsonPath)
 }
 
 //Selects one registry from a table using its ID, preffix is a set of dir/subdirectories
@@ -32,7 +32,7 @@ func Select[T interface{}](id string, doc T, preffix ...string) T {
 	jsonBytes, err:=ioutil.ReadFile(jsonPath)
 	b.Fatal(err)
 	json.Unmarshal(jsonBytes, &reg)
-	b.Trace("Bolster: SELECT: ", id, doc, table)
+	b.Trace("Bolster: SELECT: ", id, doc, ": ", jsonPath)
 	return doc
 }
 
@@ -44,6 +44,7 @@ func SelectIds[T interface{}](doc T, preffix ...string) []string {
 	b.Fatal(err)
 	for _, f:=range fileList {
 		if strings.HasSuffix(f.Name(), ".json") {
+			b.Trace("Bolster: SELECT_IDS: found: ", f.Name())
 			idList=append(idList, strings.TrimSuffix(f.Name(), ".json"))
 		}
 	}
