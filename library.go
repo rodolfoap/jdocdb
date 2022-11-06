@@ -6,6 +6,7 @@ type Register struct {
 	Data interface{}
 }
 
+// Returns a lowercase string with the type
 func GetType(doc interface{}) string {
 	return strings.ToLower(strings.SplitN(fmt.Sprintf("%T", doc), ".", 2)[1])
 }
@@ -21,7 +22,7 @@ func Insert[T interface{}](id string, doc T, preffix ...string) {
 	jsonBytes=append(jsonBytes, byte('\n'))
 	err=ioutil.WriteFile(jsonPath, jsonBytes, 0644)
 	b.Fatal(err)
-	b.Trace("Bolster: INSERT: ", id, ": ", jsonPath)
+	b.Trace("JDocDB INSERT: ", id, ": ", jsonPath)
 }
 
 //Selects one registry from a table using its ID, preffix is a set of dir/subdirectories
@@ -33,7 +34,7 @@ func Select[T interface{}](id string, doc T, preffix ...string) T {
 	b.Fatal(err)
 	err=json.Unmarshal(jsonBytes, &reg)
 	b.Fatal(err)
-	b.Trace("Bolster: SELECT: ", id, doc, ": ", jsonPath)
+	b.Trace("JDocDB SELECT: ", id, ": ", jsonPath)
 	return doc
 }
 
@@ -45,11 +46,11 @@ func SelectIds[T interface{}](doc T, preffix ...string) []string {
 	b.Fatal(err)
 	for _, f:=range fileList {
 		if strings.HasSuffix(f.Name(), ".json") {
-			b.Trace("Bolster: SELECT_IDS: found: ", f.Name())
+			b.Trace("JDocDB SELECT_IDS: found: ", f.Name())
 			idList=append(idList, strings.TrimSuffix(f.Name(), ".json"))
 		}
 	}
-	b.Trace("Bolster: SELECT_IDS: ", idList, table)
+	b.Trace("JDocDB SELECT_IDS: ", idList, table)
 	return idList
 }
 
@@ -59,7 +60,7 @@ func SelectAll[T interface{}](doc T, preffix ...string) map[string]T {
 	for _, id:=range SelectIds(doc, preffix...) {
 		docs[id]=Select(id, doc, preffix...)
 	}
-	b.Trace("Bolster: SELECT_ALL: ", docs)
+	b.Trace("JDocDB SELECT_ALL: ", docs)
 	return docs
 }
 
@@ -91,6 +92,6 @@ func SelectFilter[T interface{}](doc T, cond map[string]string, preffix ...strin
 			docs[id]=one
 		}
 	}
-	b.Trace("Bolster: SELECT_FILTER: ", docs)
+	b.Trace("JDocDB SELECT_FILTER: ", docs)
 	return docs
 }
