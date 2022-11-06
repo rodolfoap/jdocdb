@@ -2,7 +2,7 @@ module github.com/rodolfoap/jdocdb
 
 go 1.18
 
-require github.com/rodolfoap/bolster v0.9.10
+require github.com/rodolfoap/bolster v0.9.12
 
 require (
 	golang.org/x/sys v0.1.0 // indirect

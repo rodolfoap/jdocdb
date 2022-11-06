@@ -44,7 +44,10 @@ func Select[T interface{}](id string, doc T, prefix ...string) T {
 	table:=buildPath(GetType(doc), prefix...)
 	jsonPath:=filepath.Join(table, id+".json")
 	jsonBytes, err:=ioutil.ReadFile(jsonPath)
-	b.Error(err)
+	if err!=nil {
+		b.Tracef("Data file %v not found.", jsonPath)
+		return doc
+	}
 	err=json.Unmarshal(jsonBytes, &reg)
 	b.Error(err)
 	b.Trace("JDocDB SELECT: ", id, ": ", jsonPath)

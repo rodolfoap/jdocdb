@@ -5,6 +5,9 @@ execute(){
 	go mod tidy
 	BDEBUG=1 go test -v
 }
+updatelibs(){
+	go get -u github.com/rodolfoap/bolster@$(cat ~/git/bolster/VERSION)
+}
 tagversion(){
 	# Always increase VERSION
 	NEWVERS=$(cat VERSION|awk -F. '{print $1"."$2"."$3+1}')
@@ -24,11 +27,13 @@ tagversion(){
 }
 
 case "$1" in
- t)	tagversion;
+t)	tagversion;
 	;;
- e) 	vi -p $(grep -v '^#' .edit) .edit
+e) 	vi -p $(grep -v '^#' .edit) .edit
 	ls *.go|xargs -n1 goformat
 	execute;
+	;;
+u)	updatelibs
 	;;
 "")	execute
 	;;
