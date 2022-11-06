@@ -31,7 +31,8 @@ func Select[T interface{}](id string, doc T, preffix ...string) T {
 	jsonPath:=filepath.Join(table, id+".json")
 	jsonBytes, err:=ioutil.ReadFile(jsonPath)
 	b.Fatal(err)
-	json.Unmarshal(jsonBytes, &reg)
+	err=json.Unmarshal(jsonBytes, &reg)
+	b.Fatal(err)
 	b.Trace("Bolster: SELECT: ", id, doc, ": ", jsonPath)
 	return doc
 }
