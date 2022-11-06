@@ -32,7 +32,7 @@ func Select[T interface{}](id string, doc T, preffix ...string) T {
 	jsonBytes, err:=ioutil.ReadFile(jsonPath)
 	b.Fatal(err)
 	json.Unmarshal(jsonBytes, &reg)
-	b.Trace("Bolster: SELECT: ", id, doc)
+	b.Trace("Bolster: SELECT: ", id, doc, table)
 	return doc
 }
 
@@ -47,7 +47,7 @@ func SelectIds[T interface{}](doc T, preffix ...string) []string {
 			idList=append(idList, strings.TrimSuffix(f.Name(), ".json"))
 		}
 	}
-	b.Trace("Bolster: SELECT_IDS: ", idList)
+	b.Trace("Bolster: SELECT_IDS: ", idList, table)
 	return idList
 }
 
