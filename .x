@@ -6,7 +6,7 @@ execute(){
 	BDEBUG=1 go test -v
 }
 updatelibs(){
-	go get -u github.com/rodolfoap/bolster@$(cat ~/git/bolster/VERSION)
+	go get -u github.com/rodolfoap/gx@$(cat ~/git/gx/VERSION)
 }
 tagversion(){
 	# Always increase VERSION

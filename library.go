@@ -1,5 +1,5 @@
 package jdocdb
-import("encoding/json"; "fmt"; "io/ioutil"; "os"; "path/filepath"; "reflect"; "strings"; b "github.com/rodolfoap/bolster";)
+import("encoding/json"; "fmt"; "io/ioutil"; "os"; "path/filepath"; "reflect"; "strings"; b "github.com/rodolfoap/gx";)
 
 type Register struct {
 	Id   string
