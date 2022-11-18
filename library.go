@@ -81,7 +81,7 @@ func SelectAll[T interface{}](doc T, prefix ...string) map[string]T {
 }
 
 // Selects all rows that meet some conditions, prefix is a set of dir/subdirectories
-func SelectWhere[T Table](doc T, cond func(T) bool, prefix ...string) map[string]T {
+func SelectWhere[T interface{}](doc T, cond func(T) bool, prefix ...string) map[string]T {
 	docs:=map[string]T{}
 	for _, id:=range SelectIds(doc, prefix...) {
 		candidate:=Select(id, doc, prefix...)
@@ -97,8 +97,3 @@ func SelectWhere[T Table](doc T, cond func(T) bool, prefix ...string) map[string
 func GetType(doc interface{}) string {
 	return strings.ToLower(strings.SplitN(fmt.Sprintf("%T", doc), ".", 2)[1])
 }
-
-// Cleans up strings for comparison
-//func neat(value interface{}) string {
-//	return strings.ToLower(strings.TrimSpace(fmt.Sprintf("%v", value)))
-//}

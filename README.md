@@ -38,11 +38,6 @@ type Animal struct {
 	Beak bool
 }
 
-// Then, declare them as 'Table'
-type Table interface {
-	Person | Animal
-}
-
 // Now, you can start SQLing...
 func Test_lib(t *testing.T) {
 	/* All functions have some PARAMETERS and then [ PREFIX [, SUFFIX] ],
