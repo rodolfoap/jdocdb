@@ -7,11 +7,11 @@ type Register struct {
 }
 
 // Prefix and suffix handling:
-//	0. prefix_suffix ...string is [prefix, suffix, ignored, ignored...]string
-//	   in other words, prefix==prefix_suffix[0], suffix==prefix_suffix[1]
-//	1. If NO PREFIX is specified, the path will be ./person/
-//	2. If PREFIX=data, the path will be ./data/person/
-//	3. If SUFFIX=people, the path will be ./data/people/
+//  0. prefix_suffix ...string is [prefix, suffix, ignored, ignored...]string
+//     in other words, prefix==prefix_suffix[0], suffix==prefix_suffix[1]
+//  1. If NO PREFIX is specified, the path will be ./person/
+//  2. If PREFIX=data, the path will be ./data/person/
+//  3. If SUFFIX=people, the path will be ./data/people/
 func buildPath(baseName string, prefix_suffix ...string) string {
 	prefix, suffix:="", baseName
 	if len(prefix_suffix)>0 {
@@ -38,7 +38,7 @@ func Insert[T interface{}](id string, doc T, prefix ...string) {
 	b.Trace("JDocDB INSERT: ", id, ": ", jsonPath)
 }
 
-//Selects one registry from a table using its ID, prefix is a set of dir/subdirectories
+// Selects one registry from a table using its ID, prefix is a set of dir/subdirectories
 func Select[T interface{}](id string, doc T, prefix ...string) T {
 	reg:=Register{Id: id, Data: &doc}
 	table:=buildPath(GetType(doc), prefix...)
