@@ -22,7 +22,7 @@ This is a minimalist file-based JSON documents database with the capability of c
 ## Example usage
 
 ```
-package jdocdb
+package main
 import("fmt"; db "github.com/rodolfoap/jdocdb";)
 
 // First, define the structure of your tables
@@ -39,7 +39,7 @@ type Animal struct {
 }
 
 // Now, you can start SQLing...
-func Test_lib(t *testing.T) {
+func main() {
 	/* All functions have some PARAMETERS and then [ PREFIX [, SUFFIX] ],
 
 	For example: db.SelectIds(Person{}, "prefix", "suffix")
@@ -69,16 +69,16 @@ func Test_lib(t *testing.T) {
 	db.Insert("n9878", Person{"Junge", 55, true}, "prefix", "suffix")
 	/* Now, we have:
 	.
-	├── person
-	│   └── z0215.json
-	└── prefix
-	    ├── person
-	    │   └── w1132.json
-	    └── suffix
-	        ├── n9878.json
-	        ├── p0926.json
-	        ├── q9823.json
-	        └── r8791.json
+	├── person/
+	│   └── z0215.json
+	└── prefix/
+	    ├── person/
+	    │   └── w1132.json
+	    └── suffix/
+	        ├── n9878.json
+	        ├── p0926.json
+	        ├── q9823.json
+	        └── r8791.json
 
 	1. If NO PREFIX is specified, the path will be ./person/
 	2. If PREFIX=data, the path will be ./data/person/
@@ -102,7 +102,6 @@ func Test_lib(t *testing.T) {
 
 	/* Complex Queries: do whatever query emulating a SELECT*FROM [TABLE] WHERE [CONDITIONS...] */
 	/* Usage: db.SelectWhere(EMPTY_STRUCT, func(p Table) bool, [ PREFIX [, SUFFIX] ]) */
-	/* Do not forget to declare the structure as a Table, see the top of this file */
 
 	filtered:=db.SelectWhere(Person{}, func(p Person) bool { return p.Age==55 }, "prefix", "suffix")
 	// map[n9878:{Junge 55 true} r8791:{Jonna 55 false}]
@@ -127,12 +126,12 @@ func Test_lib(t *testing.T) {
 		Result:
 
 		prefix/
-		└── animal
-		    ├── ant.json
-		    ├── cat.json
-		    ├── chicken.json
-		    ├── dinosaur.json
-		    └── dog.json
+		└── animal/
+		    ├── ant.json
+		    ├── cat.json
+		    ├── chicken.json
+		    ├── dinosaur.json
+		    └── dog.json
 	*/
 
 	// A nested function, any kind of function will do.
