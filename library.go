@@ -1,5 +1,5 @@
 package jdocdb
-import("encoding/json"; "fmt"; "io/ioutil"; "os"; "path/filepath"; "reflect"; "strings"; b "github.com/rodolfoap/gx";)
+import("encoding/json"; "fmt"; "io/ioutil"; "os"; "path/filepath"; "strings"; b "github.com/rodolfoap/gx";)
 
 type Register struct {
 	Id   string
@@ -7,11 +7,11 @@ type Register struct {
 }
 
 // Prefix and suffix handling:
-//	0. prefix_suffix ...string is [prefix, suffix, ignored, ignored...]string
-//	   in other words, prefix==prefix_suffix[0], suffix==prefix_suffix[1]
-//	1. If NO PREFIX is specified, the path will be ./person/
-//	2. If PREFIX=data, the path will be ./data/person/
-//	3. If SUFFIX=people, the path will be ./data/people/
+//  0. prefix_suffix ...string is [prefix, suffix, ignored, ignored...]string
+//     in other words, prefix==prefix_suffix[0], suffix==prefix_suffix[1]
+//  1. If NO PREFIX is specified, the path will be ./person/
+//  2. If PREFIX=data, the path will be ./data/person/
+//  3. If SUFFIX=people, the path will be ./data/people/
 func buildPath(baseName string, prefix_suffix ...string) string {
 	prefix, suffix:="", baseName
 	if len(prefix_suffix)>0 {
@@ -38,7 +38,7 @@ func Insert[T interface{}](id string, doc T, prefix ...string) {
 	b.Trace("JDocDB INSERT: ", id, ": ", jsonPath)
 }
 
-//Selects one registry from a table using its ID, prefix is a set of dir/subdirectories
+// Selects one registry from a table using its ID, prefix is a set of dir/subdirectories
 func Select[T interface{}](id string, doc T, prefix ...string) T {
 	reg:=Register{Id: id, Data: &doc}
 	table:=buildPath(GetType(doc), prefix...)
@@ -80,39 +80,25 @@ func SelectAll[T interface{}](doc T, prefix ...string) map[string]T {
 	return docs
 }
 
+// Selects all rows that meet some conditions, prefix is a set of dir/subdirectories
+func SelectWhere[T Table](doc T, cond func(T) bool, prefix ...string) map[string]T {
+	docs:=map[string]T{}
+	for _, id:=range SelectIds(doc, prefix...) {
+		candidate:=Select(id, doc, prefix...)
+		if cond(candidate) {
+			docs[id]=Select(id, doc, prefix...)
+		}
+	}
+	b.Trace("JDocDB SELECT_WHERE: ", docs)
+	return docs
+}
+
 // Returns a lowercase string with the type
 func GetType(doc interface{}) string {
 	return strings.ToLower(strings.SplitN(fmt.Sprintf("%T", doc), ".", 2)[1])
 }
 
 // Cleans up strings for comparison
-func neat(value interface{}) string {
-	return strings.ToLower(strings.TrimSpace(fmt.Sprintf("%v", value)))
-}
-
-// Selects all rows that meet some conditions, prefix is a set of dir/subdirectories
-func SelectFilter[T interface{}](doc T, cond map[string]string, prefix ...string) map[string]T {
-	docs:=map[string]T{}
-	// Loop all documents of the table
-	for id, one:=range SelectAll(doc, prefix...) {
-		accept:=true
-		v:=reflect.ValueOf(one)
-		// Now, loop the fields
-		for i:=0; i<v.NumField(); i++ {
-			fieldKey:=v.Type().Field(i).Name
-			fieldValue:=v.Field(i).Interface()
-			// Now, check if a condition of such fieldKey (e.g. cond["Age"]) exists
-			// If so, exists=true and condValue=55
-			if condValue, exists:=cond[fieldKey]; exists {
-				if neat(fieldValue)!=neat(condValue) {
-					accept=false
-				}
-			}
-		}
-		if accept { // If conditions have all passed (accept is still true)
-			docs[id]=one
-		}
-	}
-	b.Trace("JDocDB SELECT_FILTER: ", docs)
-	return docs
-}
+//func neat(value interface{}) string {
+//	return strings.ToLower(strings.TrimSpace(fmt.Sprintf("%v", value)))
+//}

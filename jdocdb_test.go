@@ -1,12 +1,25 @@
 package jdocdb
 import("fmt"; "testing";)
 
+// First, define the structure of your tables
 type Person struct {
 	Name string
 	Age  int
 	Sex  bool
 }
 
+type Animal struct {
+	Name string
+	Legs int
+	Beak bool
+}
+
+// Then, declare them as 'Table'
+type Table interface {
+	Person | Animal
+}
+
+// Now, you can start SQLing...
 func Test_lib(t *testing.T) {
 	/* All functions have some PARAMETERS and then [ PREFIX [, SUFFIX] ],
 
@@ -68,18 +81,44 @@ func Test_lib(t *testing.T) {
 	// map[n9878:{Junge 55 true} p0926:{James 33 false} q9823:{Jonas 44 true} r8791:{Jonna 55 false}]
 	fmt.Println(m)
 
-	/* Usage: SelectAll(EMPTY_STRUCT, strings conditions map: "Key": "Value", [ PREFIX [, SUFFIX] ]) */
-	/* Warning: Keys are case-sensitive. Only exact comparisons are available. */
-	filtered:=SelectFilter(Person{}, map[string]string{"Age": "55"}, "prefix", "suffix")
+	/* Complex Queries: do whatever query emulating a SELECT*FROM [TABLE] WHERE [CONDITIONS...] */
+	/* Usage: SelectWhere(EMPTY_STRUCT, func(p Table) bool, [ PREFIX [, SUFFIX] ]) */
+	/* Do not forget to declare the structure as a Table, see the top of this file */
+
+	filtered:=SelectWhere(Person{}, func(p Person) bool { return p.Age==55 }, "prefix", "suffix")
 	// map[n9878:{Junge 55 true} r8791:{Jonna 55 false}]
-	fmt.Println(filtered)
+	fmt.Println("Having 55:", filtered)
 
-	filtered=SelectFilter(Person{}, map[string]string{"Sex": "false"}, "prefix", "suffix")
+	filtered=SelectWhere(Person{}, func(p Person) bool { return !p.Sex }, "prefix", "suffix")
 	// map[p0926:{James 33 false} r8791:{Jonna 55 false}]
-	fmt.Println(filtered)
+	fmt.Println("Have not Sex:", filtered)
 
-	filtered=SelectFilter(Person{}, map[string]string{"Sex": "true", "Age": "55"}, "prefix", "suffix")
+	filtered=SelectWhere(Person{}, func(p Person) bool { return p.Sex && p.Age==55 }, "prefix", "suffix")
 	// map[n9878:{Junge 55 true}]
-	fmt.Println(filtered)
+	fmt.Println("Have Sex and 55:", filtered)
 
+	// Testing queries with a new table...
+	Insert("dinosaur", Animal{"Barney", 2, false}, "prefix")
+	Insert("chicken", Animal{"Clotilde", 2, true}, "prefix")
+	Insert("dog", Animal{"Wallander, Mortimer", 4, false}, "prefix")
+	Insert("cat", Animal{"Watson", 3, false}, "prefix")
+	Insert("ant", Animal{"Woody", 5, true}, "prefix")
+
+	/*
+		Result:
+
+		prefix/
+		└── animal
+		    ├── ant.json
+		    ├── cat.json
+		    ├── chicken.json
+		    ├── dinosaur.json
+		    └── dog.json
+	*/
+
+	// A nested function, any kind of function will do.
+	hasLongNameOrBeak:=func(a Animal) bool { return len(a.Name)>6 || a.Beak }
+
+	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
+	fmt.Println("Has Long Name Or Beak:", SelectWhere(Animal{}, hasLongNameOrBeak, "prefix"))
 }
