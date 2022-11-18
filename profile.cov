@@ -1,0 +1,22 @@
+mode: count
+github.com/rodolfoap/jdocdb/library.go:24.65,26.28 2 47
+github.com/rodolfoap/jdocdb/library.go:29.2,29.28 1 47
+github.com/rodolfoap/jdocdb/library.go:32.2,33.18 2 47
+github.com/rodolfoap/jdocdb/library.go:26.28,28.3 1 46
+github.com/rodolfoap/jdocdb/library.go:29.28,31.3 1 31
+github.com/rodolfoap/jdocdb/library.go:37.64,48.2 10 11
+github.com/rodolfoap/jdocdb/library.go:51.66,56.16 5 30
+github.com/rodolfoap/jdocdb/library.go:60.2,63.12 4 30
+github.com/rodolfoap/jdocdb/library.go:56.16,59.3 2 0
+github.com/rodolfoap/jdocdb/library.go:67.65,72.29 5 6
+github.com/rodolfoap/jdocdb/library.go:78.2,79.15 2 6
+github.com/rodolfoap/jdocdb/library.go:72.29,73.43 1 25
+github.com/rodolfoap/jdocdb/library.go:73.43,76.4 2 25
+github.com/rodolfoap/jdocdb/library.go:83.69,85.47 2 1
+github.com/rodolfoap/jdocdb/library.go:88.2,89.13 2 1
+github.com/rodolfoap/jdocdb/library.go:85.47,87.3 1 4
+github.com/rodolfoap/jdocdb/library.go:93.90,95.47 2 4
+github.com/rodolfoap/jdocdb/library.go:101.2,102.13 2 4
+github.com/rodolfoap/jdocdb/library.go:95.47,97.22 2 17
+github.com/rodolfoap/jdocdb/library.go:97.22,99.4 1 8
+github.com/rodolfoap/jdocdb/library.go:106.38,108.2 1 47
