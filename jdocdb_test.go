@@ -1,5 +1,9 @@
 package jdocdb
-import("fmt"; "testing";)
+
+import (
+	"fmt"
+	"testing"
+)
 
 // First, define the structure of your tables
 type Person struct {
@@ -62,17 +66,17 @@ func Test_lib(t *testing.T) {
 	*/
 
 	/* Usage: Select(KEY, EMPTY_STRUCT, [ PREFIX [, SUFFIX] ]) */
-	jonas:=Select("q9823", Person{}, "prefix", "suffix")
+	jonas := Select("q9823", Person{}, "prefix", "suffix")
 	// {Jonas 44 true}, main.Person, 44
 	fmt.Printf("%v, %T, %v\n", jonas, jonas, jonas.Age)
 
 	/* Usage: SelectIds(EMPTY_STRUCT, [ PREFIX [, SUFFIX] ]) */
-	listIds:=SelectIds(Person{}, "prefix", "suffix")
+	listIds := SelectIds(Person{}, "prefix", "suffix")
 	// [n9878 p0926 q9823 r8791]
 	fmt.Println(listIds)
 
 	/* Usage: SelectAll(EMPTY_STRUCT, [ PREFIX [, SUFFIX] ]) */
-	m:=SelectAll(Person{}, "prefix", "suffix")
+	m := SelectAll(Person{}, "prefix", "suffix")
 	// map[n9878:{Junge 55 true} p0926:{James 33 false} q9823:{Jonas 44 true} r8791:{Jonna 55 false}]
 	fmt.Println(m)
 
@@ -80,15 +84,15 @@ func Test_lib(t *testing.T) {
 	/* Usage: SelectWhere(EMPTY_STRUCT, func(p Table) bool, [ PREFIX [, SUFFIX] ]) */
 	/* Do not forget to declare the structure as a Table, see the top of this file */
 
-	filtered:=SelectWhere(Person{}, func(p Person) bool { return p.Age==55 }, "prefix", "suffix")
+	filtered := SelectWhere(Person{}, func(p Person) bool { return p.Age == 55 }, "prefix", "suffix")
 	// map[n9878:{Junge 55 true} r8791:{Jonna 55 false}]
 	fmt.Println("Having 55:", filtered)
 
-	filtered=SelectWhere(Person{}, func(p Person) bool { return !p.Sex }, "prefix", "suffix")
+	filtered = SelectWhere(Person{}, func(p Person) bool { return !p.Sex }, "prefix", "suffix")
 	// map[p0926:{James 33 false} r8791:{Jonna 55 false}]
 	fmt.Println("Have not Sex:", filtered)
 
-	filtered=SelectWhere(Person{}, func(p Person) bool { return p.Sex && p.Age==55 }, "prefix", "suffix")
+	filtered = SelectWhere(Person{}, func(p Person) bool { return p.Sex && p.Age == 55 }, "prefix", "suffix")
 	// map[n9878:{Junge 55 true}]
 	fmt.Println("Have Sex and 55:", filtered)
 
@@ -112,7 +116,7 @@ func Test_lib(t *testing.T) {
 	*/
 
 	// A nested function, any kind of function will do.
-	hasLongNameOrBeak:=func(a Animal) bool { return len(a.Name)>6 || a.Beak }
+	hasLongNameOrBeak := func(a Animal) bool { return len(a.Name) > 6 || a.Beak }
 
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
 	fmt.Println("Has Long Name Or Beak:", SelectWhere(Animal{}, hasLongNameOrBeak, "prefix"))
