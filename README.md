@@ -1,5 +1,6 @@
 # jdocdb: A JSON File-documents Database
 [![Go Reference](https://pkg.go.dev/badge/github.com/rodolfoap/jdocdb.svg)](https://pkg.go.dev/github.com/rodolfoap/jdocdb)
+[![Go Report Card](https://goreportcard.com/badge/github.com/rodolfoap/jdocdb)](https://goreportcard.com/report/github.com/rodolfoap/jdocdb)
 
 This is a minimalist file-based JSON documents database with the capability of complex SELECT operations over a single table:
 
