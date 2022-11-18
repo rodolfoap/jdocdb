@@ -2,24 +2,16 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/rodolfoap/jdocdb.svg)](https://pkg.go.dev/github.com/rodolfoap/jdocdb)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rodolfoap/jdocdb)](https://goreportcard.com/report/github.com/rodolfoap/jdocdb)
 
-This is a minimalist file-based JSON documents database with the capability of complex SELECT operations over a single table:
+A minimalist file-based JSON documents database with the capability of complex SELECT operations over a single table.
 
-* Tables are subdirectories;
-* Registries are files;
-* Filenames are registry IDs;
+* Tables are subdirectories, e.g. `./clients/`;
+* Registries are files, e.g. `./clients/a929782.json`;
+* Filenames are registry IDs, e.g. `./clients/a929782.json` has `ID==a929782`;
 * SQL SELECT equivalents are:
 	* `Select(id, struct, tableLocation)`: "SELECT * FROM TABLE WHERE ID=id;", producing a single _struct_.
 	* `SelectIds(struct, tableLocation)`: "SELECT ID FROM TABLE;", producing a slice of strings.
 	* `SelectAll(struct, tableLocation)`: "SELECT * FROM TABLE;", producing a map[id]_struct_ (a map of structs, where the index is the table ID)
 	* `SelectWhere(struct, function, tableLocation)`: "SELECT * FROM TABLE WHERE conditions;", producing a map[id]_struct_ (a map of structs, where the index is the table ID), according to a function, which can be a closure, a nested or a common function.
-
-## TODO
-
-* [ ] Needs to be thread-safe
-* [ ] Needs better error handling
-* [x] Needs some logging
-* [x] SELECT needs to be improved, the reflection loop is fragile and could fail under heavy conditions
-* [x] Needs better SELECT comparison operators, maybe passing functions
 
 ## Example usage
 
@@ -102,7 +94,9 @@ func main() {
 	// map[n9878:{Junge 55 true} p0926:{James 33 false} q9823:{Jonas 44 true} r8791:{Jonna 55 false}]
 	fmt.Println(m)
 
-	/* Complex Queries: do whatever query emulating a SELECT*FROM [TABLE] WHERE [CONDITIONS...] */
+	/* Complex Queries over a Single Table **********************************************************/
+
+	/* Do whatever query emulating a SELECT*FROM [TABLE] WHERE [CONDITIONS...] */
 	/* Usage: db.SelectWhere(EMPTY_STRUCT, func(p Table) bool, [ PREFIX [, SUFFIX] ]) */
 
 	filtered:=db.SelectWhere(Person{}, func(p Person) bool { return p.Age==55 }, "prefix", "suffix")
