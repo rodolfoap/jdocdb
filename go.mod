@@ -1,6 +1,6 @@
 module github.com/rodolfoap/jdocdb
 
-go 1.18
+go 1.19
 
 require github.com/rodolfoap/gx v0.9.14
 
