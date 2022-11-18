@@ -30,7 +30,7 @@ case "$1" in
 t)	tagversion;
 	;;
 e) 	vi -p $(grep -v '^#' .edit) .edit
-	ls *.go|xargs -n1 goformat
+	ls *.go|xargs -n1 gofmt -s -w
 	execute;
 	;;
 u)	updatelibs
