@@ -1,5 +1,5 @@
 package jdocdb
-import("fmt"; "testing";)
+import("fmt"; "testing"; b "github.com/rodolfoap/gx";)
 
 type Person struct {
 	Name string
@@ -82,4 +82,22 @@ func Test_lib(t *testing.T) {
 	// map[n9878:{Junge 55 true}]
 	fmt.Println(filtered)
 
+	check:=SelectFilter2(Person{}, hasSex, "prefix", "suffix")
+	fmt.Println("HASSEX:", check)
+}
+
+type fPerson func(person Person) bool
+
+func hasSex(person Person) bool {
+	return person.Sex
+}
+
+func SelectFilter2(doc Person, cond fPerson, prefix ...string) bool {
+	if cond(doc) {
+		b.Trace("TRUE")
+		return true
+	} else {
+		b.Trace("FALSE")
+		return false
+	}
 }
