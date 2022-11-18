@@ -1,12 +1,6 @@
 package jdocdb
 import("fmt"; "testing"; b "github.com/rodolfoap/gx";)
 
-type Person struct {
-	Name string
-	Age  int
-	Sex  bool
-}
-
 func Test_lib(t *testing.T) {
 	/* All functions have some PARAMETERS and then [ PREFIX [, SUFFIX] ],
 
@@ -84,6 +78,9 @@ func Test_lib(t *testing.T) {
 
 	check:=SelectFilter2(Person{}, hasSex, "prefix", "suffix")
 	fmt.Println("HASSEX:", check)
+
+	fmt.Println("CHECK:", Person{Sex: true}.CheckSex())
+	fmt.Println("CHECK:", SelectFilter3(Person{Sex: true}.CheckSex()))
 }
 
 type fPerson func(person Person) bool
@@ -91,7 +88,6 @@ type fPerson func(person Person) bool
 func hasSex(person Person) bool {
 	return person.Sex
 }
-
 func SelectFilter2(doc Person, cond fPerson, prefix ...string) bool {
 	if cond(doc) {
 		b.Trace("TRUE")
@@ -100,4 +96,27 @@ func SelectFilter2(doc Person, cond fPerson, prefix ...string) bool {
 		b.Trace("FALSE")
 		return false
 	}
+}
+func SelectFilter3(function fPerson, prefix ...string) bool {
+	if doc.function() {
+		b.Trace("TRUE")
+		return true
+	} else {
+		b.Trace("FALSE")
+		return false
+	}
+}
+
+/*===================================================================================*/
+type Person struct {
+	Name string
+	Age  int
+	Sex  bool
+}
+type Checker interface {
+	Check() bool
+}
+
+func (p Person) CheckSex() bool {
+	return p.Sex
 }
