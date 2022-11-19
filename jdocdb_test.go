@@ -120,6 +120,7 @@ func Test_lib(t *testing.T) {
 
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
 	fmt.Println("Has Long Name Or Beak:", SelectWhere(Animal{}, hasLongNameOrBeak, "prefix"))
+	fmt.Println("IDs for Has Long Name Or Beak:", SelectIdWhere(Animal{}, hasLongNameOrBeak, "prefix"))
 
 	// A bad SELECT: file does not exist
 	jojo := Select("a7654", Person{}, "prefix", "suffix")

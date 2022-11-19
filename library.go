@@ -95,11 +95,24 @@ func SelectWhere[T interface{}](doc T, cond func(T) bool, prefix ...string) map[
 	for _, id := range SelectIds(doc, prefix...) {
 		candidate := Select(id, doc, prefix...)
 		if cond(candidate) {
-			docs[id] = Select(id, doc, prefix...)
+			docs[id] = candidate
 		}
 	}
 	gx.Trace("JDocDB SELECT_WHERE: ", docs)
 	return docs
+}
+
+// Selects all rows that meet some conditions, prefix is a set of dir/subdirectories
+func SelectIdWhere[T interface{}](doc T, cond func(T) bool, prefix ...string) []string {
+	idList := []string{}
+	for _, id := range SelectIds(doc, prefix...) {
+		candidate := Select(id, doc, prefix...)
+		if cond(candidate) {
+			idList = append(idList, id)
+		}
+	}
+	gx.Trace("JDocDB SELECT_ID_WHERE: ", idList)
+	return idList
 }
 
 // Returns a lowercase string with the type
