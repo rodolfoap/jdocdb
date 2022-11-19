@@ -5,7 +5,7 @@
 [![GitHub go.mod Go version of a Go module](https://img.shields.io/github/go-mod/go-version/gomods/athens.svg)](https://github.com/gomods/athens)
 [![GPLv3 license](https://img.shields.io/badge/License-GPLv3-blue.svg)](http://perso.crans.org/besson/LICENSE.html)
 
-A minimalist file-based JSON documents database with the capability of complex SELECT operations over a single table.
+A minimalist file-based JSON documents database with the capability of complex SELECT WHERE operations over a single table.
 
 * Tables are subdirectories, e.g. `./clients/`;
 * Registries are files, e.g. `./clients/a929782.json`;

@@ -123,6 +123,5 @@ func Test_lib(t *testing.T) {
 
 	// A bad SELECT: file does not exist
 	jojo := Select("a7654", Person{}, "prefix", "suffix")
-	fmt.Printf("%v\n", jojo)
-
+	fmt.Printf("This is just empty: %v\n", jojo)
 }

@@ -3,7 +3,7 @@ package jdocdb
 import (
 	"encoding/json"
 	"fmt"
-	b "github.com/rodolfoap/gx"
+	"github.com/rodolfoap/gx"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -40,11 +40,11 @@ func Insert[T interface{}](id string, doc T, prefix ...string) {
 	os.MkdirAll(table, 0755)
 	jsonPath := filepath.Join(table, id+".json")
 	jsonBytes, err := json.MarshalIndent(reg, "", "\t")
-	b.Error(err)
+	gx.Error(err)
 	jsonBytes = append(jsonBytes, byte('\n'))
 	err = ioutil.WriteFile(jsonPath, jsonBytes, 0644)
-	b.Fatal(err)
-	b.Trace("JDocDB INSERT: ", id, ": ", jsonPath)
+	gx.Fatal(err)
+	gx.Trace("JDocDB INSERT: ", id, ": ", jsonPath)
 }
 
 // Selects one registry from a table using its ID, prefix is a set of dir/subdirectories
@@ -54,12 +54,12 @@ func Select[T interface{}](id string, doc T, prefix ...string) T {
 	jsonPath := filepath.Join(table, id+".json")
 	jsonBytes, err := ioutil.ReadFile(jsonPath)
 	if err != nil {
-		b.Tracef("Data file %v not found.", jsonPath)
+		gx.Tracef("Data file %v not found.", jsonPath)
 		return doc
 	}
 	err = json.Unmarshal(jsonBytes, &reg)
-	b.Error(err)
-	b.Trace("JDocDB SELECT: ", id, ": ", jsonPath)
+	gx.Error(err)
+	gx.Trace("JDocDB SELECT: ", id, ": ", jsonPath)
 	return doc
 }
 
@@ -68,14 +68,14 @@ func SelectIds[T interface{}](doc T, prefix ...string) []string {
 	idList := []string{}
 	table := buildPath(GetType(doc), prefix...)
 	fileList, err := ioutil.ReadDir(table)
-	b.Error(err)
+	gx.Error(err)
 	for _, f := range fileList {
 		if strings.HasSuffix(f.Name(), ".json") {
-			b.Trace("JDocDB SELECT_IDS: found: ", f.Name())
+			gx.Trace("JDocDB SELECT_IDS: found: ", f.Name())
 			idList = append(idList, strings.TrimSuffix(f.Name(), ".json"))
 		}
 	}
-	b.Trace("JDocDB SELECT_IDS: ", idList, ": ", table)
+	gx.Trace("JDocDB SELECT_IDS: ", idList, ": ", table)
 	return idList
 }
 
@@ -85,7 +85,7 @@ func SelectAll[T interface{}](doc T, prefix ...string) map[string]T {
 	for _, id := range SelectIds(doc, prefix...) {
 		docs[id] = Select(id, doc, prefix...)
 	}
-	b.Trace("JDocDB SELECT_ALL: ", docs)
+	gx.Trace("JDocDB SELECT_ALL: ", docs)
 	return docs
 }
 
@@ -98,7 +98,7 @@ func SelectWhere[T interface{}](doc T, cond func(T) bool, prefix ...string) map[
 			docs[id] = Select(id, doc, prefix...)
 		}
 	}
-	b.Trace("JDocDB SELECT_WHERE: ", docs)
+	gx.Trace("JDocDB SELECT_WHERE: ", docs)
 	return docs
 }
 
