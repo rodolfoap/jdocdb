@@ -1,4 +1,13 @@
 mode: count
+github.com/rodolfoap/jdocdb/internal.go:11.38,13.2 1 83
+github.com/rodolfoap/jdocdb/internal.go:17.53,19.19 2 13
+github.com/rodolfoap/jdocdb/internal.go:22.2,22.10 1 13
+github.com/rodolfoap/jdocdb/internal.go:19.19,21.3 1 54
+github.com/rodolfoap/jdocdb/internal.go:32.65,34.28 2 83
+github.com/rodolfoap/jdocdb/internal.go:37.2,37.28 1 83
+github.com/rodolfoap/jdocdb/internal.go:40.2,41.18 2 83
+github.com/rodolfoap/jdocdb/internal.go:34.28,36.3 1 4
+github.com/rodolfoap/jdocdb/internal.go:37.28,39.3 1 2
 github.com/rodolfoap/jdocdb/library.go:21.64,32.2 10 13
 github.com/rodolfoap/jdocdb/library.go:36.66,41.16 5 53
 github.com/rodolfoap/jdocdb/library.go:45.2,48.12 4 52
@@ -26,12 +35,3 @@ github.com/rodolfoap/jdocdb/library.go:136.2,137.15 2 1
 github.com/rodolfoap/jdocdb/library.go:132.30,135.3 2 5
 github.com/rodolfoap/jdocdb/library.go:141.56,145.2 3 1
 github.com/rodolfoap/jdocdb/library.go:148.64,154.2 5 4
-github.com/rodolfoap/jdocdb/internal.go:11.38,13.2 1 83
-github.com/rodolfoap/jdocdb/internal.go:17.53,19.19 2 13
-github.com/rodolfoap/jdocdb/internal.go:22.2,22.10 1 13
-github.com/rodolfoap/jdocdb/internal.go:19.19,21.3 1 54
-github.com/rodolfoap/jdocdb/internal.go:32.65,34.28 2 83
-github.com/rodolfoap/jdocdb/internal.go:37.2,37.28 1 83
-github.com/rodolfoap/jdocdb/internal.go:40.2,41.18 2 83
-github.com/rodolfoap/jdocdb/internal.go:34.28,36.3 1 4
-github.com/rodolfoap/jdocdb/internal.go:37.28,39.3 1 2

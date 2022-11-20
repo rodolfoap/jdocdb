@@ -113,22 +113,22 @@ func main() {
 	*/
 
 	/* Usage: db.Select(KEY, EMPTY_STRUCT, [ PREFIX [, SUFFIX] ]) */
-	jonas:=db.Select("q9823", Person{})
+	jonas := db.Select("q9823", Person{})
 	// {Jonas 44 true}, jdocdb.Person, 44
 	fmt.Printf("%v, %T, %v\n", jonas, jonas, jonas.Age)
 
 	/* Usage: db.SelectIds(EMPTY_STRUCT, [ PREFIX [, SUFFIX] ]) */
-	listIds:=db.SelectIds(Person{})
+	listIds := db.SelectIds(Person{})
 	// [n9878 p0926 q9823 r8791]
 	fmt.Println(listIds)
 
 	/* Usage: db.SelectAll(EMPTY_STRUCT, [ PREFIX [, SUFFIX] ]) */
-	m:=db.SelectAll(Person{})
+	m := db.SelectAll(Person{})
 	// map[n9878:{Junge 55 true} p0926:{James 33 false} q9823:{Jonas 44 true} r8791:{Jonna 33 false}]
 	fmt.Println(m)
 
 	// A bad SELECT: file does not exist
-	jojo:=db.Select("a7654", Person{})
+	jojo := db.Select("a7654", Person{})
 	fmt.Printf("This is just empty: %v\n", jojo)
 
 	/* Complex Queries: do whatever query emulating a SELECT*FROM [TABLE] WHERE [CONDITIONS...] */
@@ -136,23 +136,23 @@ func main() {
 	/* Do not forget to declare the structure as a Table, see the top of this file */
 
 	/*
-		SELECT*FROM Person WHERE AGE==55
+		SELECT * FROM Person WHERE AGE == 55
 	*/
-	filtered:=db.SelectWhere(Person{}, func(p Person) bool { return p.Age==55 })
+	filtered := db.SelectWhere(Person{}, func(p Person) bool { return p.Age == 55 })
 	// map[n9878:{Junge 55 true} r8791:{Jonna 55 false}]
 	fmt.Println("Having 55:", filtered)
 
 	/*
-		SELECT*FROM Person WHERE NOT Sex
+		SELECT * FROM Person WHERE NOT Sex
 	*/
-	filtered=db.SelectWhere(Person{}, func(p Person) bool { return !p.Sex })
+	filtered = db.SelectWhere(Person{}, func(p Person) bool { return !p.Sex })
 	// map[p0926:{James 33 false} r8791:{Jonna 55 false}]
 	fmt.Println("Have not Sex:", filtered)
 
 	/*
-		SELECT*FROM Person WHERE Sex AND AGE==55
+		SELECT * FROM Person WHERE Sex AND AGE == 55
 	*/
-	filtered=db.SelectWhere(Person{}, func(p Person) bool { return p.Sex && p.Age==55 })
+	filtered = db.SelectWhere(Person{}, func(p Person) bool { return p.Sex && p.Age == 55 })
 	// map[n9878:{Junge 55 true}]
 	fmt.Println("Have Sex and 55:", filtered)
 
@@ -174,40 +174,57 @@ func main() {
 	*/
 
 	// A nested function, any kind of function will do.
-	hasLongNameOrBeak:=func(a Animal) bool { return len(a.Name)>6 || a.Beak }
+	hasLongNameOrBeak := func(a Animal) bool { return len(a.Name) > 6 || a.Beak }
 
 	/*
-		Example SELECT*WHERE LEN(name)>6 OR Beak
+		Example SELECT * WHERE LEN(name)>6 OR Beak
 	*/
-	animals:=db.SelectWhere(Animal{}, hasLongNameOrBeak)
+	animals := db.SelectWhere(Animal{}, hasLongNameOrBeak)
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
 	fmt.Println("Has Long Name Or Beak:", animals)
 
 	/*
 		Example SELECT ID WHERE LEN(name)>6 OR Beak
 	*/
-	animalIDs:=db.SelectIdWhere(Animal{}, hasLongNameOrBeak)
+	animalIDs := db.SelectIdWhere(Animal{}, hasLongNameOrBeak)
 	// [chicken dog ant]
 	fmt.Println("IDs for Has Long Name Or Beak:", animalIDs)
 
 	/*
 		Making a single aggregation, example: SELECT ... COUNT(*) AS sum
 	*/
-	sum:=0
-	animals=db.SelectWhereAggreg(Animal{}, hasLongNameOrBeak, &sum, func(a Animal) { sum+=a.Legs })
+	sum := 0
+	animals = db.SelectWhereAggreg(Animal{}, hasLongNameOrBeak, &sum, func(id string, a Animal) { sum += a.Legs })
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
-	// sum==11
+	// sum == 11
 	fmt.Printf("%v, have a total of %v Legs.\n", animals, sum)
 
 	/*
 		Making multiple aggregations, example: SELECT ... COUNT(*) AS x0, SUM(Legs) AS x1
 	*/
-	x:=[]int{0, 0}
-	animals=db.SelectWhereAggreg(Animal{}, hasLongNameOrBeak, &x, func(a Animal) { x[0]+=1; x[1]+=a.Legs })
+	x := []int{0, 0}
+	animals = db.SelectWhereAggreg(Animal{}, hasLongNameOrBeak, &x, func(id string, a Animal) { x[0] += 1; x[1] += a.Legs })
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
-	// sum==11
+	// sum == 11
 	fmt.Printf("%v, COUNT: %v; SUM(Legs): %v.\n", animals, x[0], x[1])
 	// map[ant:{...} chicken:{...} dog:{...}], COUNT: 3; SUM(Legs): 11.
+
+	legs := 0
+	quantity := db.CountWhereAggreg(Animal{}, hasLongNameOrBeak, &legs, func(id string, a Animal) { legs += a.Legs })
+	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
+	// quantity == 3 and legs == 11
+	fmt.Printf("Simpler, COUNT: %v; SUM(Legs): %v.\n", quantity, legs)
+
+	legs = 0
+	quantity = db.CountAggreg(Animal{}, &legs, func(id string, a Animal) { legs += a.Legs })
+	// map[ant:{Woody 5 true} cat:{Watson 3 false} chicken:{Clotilde 2 true} dinosaur:{Barney 2 false} dog:{Wallander, Mortimer 4 false}]
+	// quantity == 5 and legs == 16
+	fmt.Printf("Even simpler, COUNT: %v; SUM(Legs): %v.\n", quantity, legs)
+
+	quantity = db.Count(Animal{})
+	// map[ant:{Woody 5 true} cat:{Watson 3 false} chicken:{Clotilde 2 true} dinosaur:{Barney 2 false} dog:{Wallander, Mortimer 4 false}]
+	// quantity == 5
+	fmt.Printf("Bare COUNT: %v.\n", quantity)
 
 	// db.Delete function
 	db.Delete("p0926", Person{})
@@ -215,7 +232,7 @@ func main() {
 	db.Delete("q9823", Person{})
 	db.Delete("r8791", Person{})
 
-	remaining:=db.SelectAll(Person{})
+	remaining := db.SelectAll(Person{})
 	fmt.Println("Remaining after delete:", remaining)
 }
 ```
