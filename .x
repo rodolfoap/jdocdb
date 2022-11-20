@@ -33,6 +33,7 @@ e) 	vi -p $(grep -v '^#' .edit) .edit
 	ls *.go|xargs -n1 gofmt -s -w
 	execute;;
 u)	updatelibs;;
-c)	~/bin/go.coverage;;
+c)	gocoverage;;
+cc)	~/bin/go.coverage;;
 "")	execute;;
 esac
