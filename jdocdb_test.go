@@ -33,9 +33,8 @@ func Test_lib(t *testing.T) {
 	*/
 
 	/*: Usage: Insert(KEY, STRUCT, [ PREFIX [, SUFFIX] ]) */
-	Insert("dinosaur", Animal{"Barney", 2, false})
 	Insert("p0926", Person{"James", 33, false})
-	/* The last INSERT will produce the following file: ./people/p0926.json:
+	/* Will create the file ./people/p0926.json with this content:
 	{
 		"Id": "p0926",
 		"Data": {
@@ -44,6 +43,9 @@ func Test_lib(t *testing.T) {
 			"Sex": false
 		}
 	} */
+
+	Insert("dinosaur", Animal{"Barney", 2, false})
+	// Will create ./animal/dinosaur.json
 
 	/*
 
@@ -58,18 +60,23 @@ func Test_lib(t *testing.T) {
 	Insert("z0215", Person{"Junge", 19, true}, "/tmp", "")
 
 	// When prefix and suffix are present: prefix/suffix/ID.json
+	// This will create ./prefix/suffix/z0215.json
 	Insert("z0215", Person{"Junge", 11, true}, "prefix", "suffix")
 
 	// When only prefix is present: prefix/TABLENAME/ID.json
 	// Notice such is a different table with the same type
+	// This will create ./prefix/person/z0215.json
 	Insert("z0215", Person{"Junge", 19, true}, "prefix")
 
 	// When none is present: ./TABLENAME/ID.json
+	// This will create ./person/q9823.json
 	Insert("q9823", Person{"Jonas", 44, true})
+
+	// More data in the ./person/ table:
 	Insert("n9878", Person{"Junge", 55, true})
 	Insert("r8791", Person{"Jonna", 55, false})
 
-	/* Now, we have:
+	/* Excluding what was created in /tmp, here we have:
 	.
 	├── animal
 	│   └── dinosaur.json
