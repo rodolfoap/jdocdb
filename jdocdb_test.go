@@ -216,5 +216,6 @@ func Test_lib(t *testing.T) {
 	Delete("r8791", Person{})
 
 	remaining := SelectAll(Person{})
+	fmt.Println("Remaining after delete:", remaining)
 	assert.Len(t, remaining, 0)
 }
