@@ -66,12 +66,12 @@ func main() {
 	db.Insert("n9878", Person{"Junge", 55, true}, "prefix", "suffix")
 	/* Now, we have:
 	.
-	├── person/
+	├── person
 	│   └── z0215.json
-	└── prefix/
-	    ├── person/
+	└── prefix
+	    ├── person
 	    │   └── w1132.json
-	    └── suffix/
+	    └── suffix
 	        ├── n9878.json
 	        ├── p0926.json
 	        ├── q9823.json
@@ -83,34 +83,46 @@ func main() {
 	*/
 
 	/* Usage: db.Select(KEY, EMPTY_STRUCT, [ PREFIX [, SUFFIX] ]) */
-	jonas:=db.Select("q9823", Person{}, "prefix", "suffix")
+	jonas := db.Select("q9823", Person{}, "prefix", "suffix")
 	// {Jonas 44 true}, main.Person, 44
 	fmt.Printf("%v, %T, %v\n", jonas, jonas, jonas.Age)
 
 	/* Usage: db.SelectIds(EMPTY_STRUCT, [ PREFIX [, SUFFIX] ]) */
-	listIds:=db.SelectIds(Person{}, "prefix", "suffix")
+	listIds := db.SelectIds(Person{}, "prefix", "suffix")
 	// [n9878 p0926 q9823 r8791]
 	fmt.Println(listIds)
 
 	/* Usage: db.SelectAll(EMPTY_STRUCT, [ PREFIX [, SUFFIX] ]) */
-	m:=db.SelectAll(Person{}, "prefix", "suffix")
+	m := db.SelectAll(Person{}, "prefix", "suffix")
 	// map[n9878:{Junge 55 true} p0926:{James 33 false} q9823:{Jonas 44 true} r8791:{Jonna 55 false}]
 	fmt.Println(m)
 
-	/* Complex Queries over a Single Table **********************************************************/
+	// A bad SELECT: file does not exist
+	jojo := db.Select("a7654", Person{}, "prefix", "suffix")
+	fmt.Printf("This is just empty: %v\n", jojo)
 
-	/* Do whatever query emulating a SELECT*FROM [TABLE] WHERE [CONDITIONS...] */
+	/* Complex Queries: do whatever query emulating a SELECT*FROM [TABLE] WHERE [CONDITIONS...] */
 	/* Usage: db.SelectWhere(EMPTY_STRUCT, func(p Table) bool, [ PREFIX [, SUFFIX] ]) */
+	/* Do not forget to declare the structure as a Table, see the top of this file */
 
-	filtered:=db.SelectWhere(Person{}, func(p Person) bool { return p.Age==55 }, "prefix", "suffix")
+	/*
+		SELECT * FROM Person WHERE AGE == 55
+	*/
+	filtered := db.SelectWhere(Person{}, func(p Person) bool { return p.Age == 55 }, "prefix", "suffix")
 	// map[n9878:{Junge 55 true} r8791:{Jonna 55 false}]
 	fmt.Println("Having 55:", filtered)
 
-	filtered=db.SelectWhere(Person{}, func(p Person) bool { return !p.Sex }, "prefix", "suffix")
+	/*
+		SELECT * FROM Person WHERE NOT Sex
+	*/
+	filtered = db.SelectWhere(Person{}, func(p Person) bool { return !p.Sex }, "prefix", "suffix")
 	// map[p0926:{James 33 false} r8791:{Jonna 55 false}]
 	fmt.Println("Have not Sex:", filtered)
 
-	filtered=db.SelectWhere(Person{}, func(p Person) bool { return p.Sex && p.Age==55 }, "prefix", "suffix")
+	/*
+		SELECT * FROM Person WHERE Sex AND AGE == 55
+	*/
+	filtered = db.SelectWhere(Person{}, func(p Person) bool { return p.Sex && p.Age == 55 }, "prefix", "suffix")
 	// map[n9878:{Junge 55 true}]
 	fmt.Println("Have Sex and 55:", filtered)
 
@@ -125,7 +137,7 @@ func main() {
 		Result:
 
 		prefix/
-		└── animal/
+		└── animal
 		    ├── ant.json
 		    ├── cat.json
 		    ├── chicken.json
@@ -134,9 +146,39 @@ func main() {
 	*/
 
 	// A nested function, any kind of function will do.
-	hasLongNameOrBeak:=func(a Animal) bool { return len(a.Name)>6 || a.Beak }
+	hasLongNameOrBeak := func(a Animal) bool { return len(a.Name) > 6 || a.Beak }
 
+	/*
+		Example SELECT * WHERE LEN(name)>6 OR Beak
+	*/
+	animals := db.SelectWhere(Animal{}, hasLongNameOrBeak, "prefix")
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
-	fmt.Println("Has Long Name Or Beak:", db.SelectWhere(Animal{}, hasLongNameOrBeak, "prefix"))
+	fmt.Println("Has Long Name Or Beak:", animals)
+
+	/*
+		Example SELECT ID WHERE LEN(name)>6 OR Beak
+	*/
+	animalIDs := db.SelectIdWhere(Animal{}, hasLongNameOrBeak, "prefix")
+	// [chicken dog ant]
+	fmt.Println("IDs for Has Long Name Or Beak:", animalIDs)
+
+	/*
+		Making a single aggregation, example: SELECT ... COUNT(*) AS sum
+	*/
+	sum := 0
+	animals = db.SelectWhereGroup(Animal{}, hasLongNameOrBeak, &sum, func(a Animal) { sum += a.Legs }, "prefix")
+	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
+	// sum == 11
+	fmt.Printf("%v, have a total of %v Legs.\n", animals, sum)
+
+	/*
+		Making multiple aggregations, example: SELECT ... COUNT(*) AS x0, SUM(Legs) AS x1
+	*/
+	x := []int{0, 0}
+	animals = db.SelectWhereGroup(Animal{}, hasLongNameOrBeak, &x, func(a Animal) { x[0] += 1; x[1] += a.Legs }, "prefix")
+	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
+	// sum == 11
+	fmt.Printf("%v, COUNT: %v; SUM(Legs): %v.\n", animals, x[0], x[1])
+	// map[ant:{...} chicken:{...} dog:{...}], COUNT: 3; SUM(Legs): 11.
 }
 ```

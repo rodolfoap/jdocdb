@@ -27,14 +27,11 @@ tagversion(){
 }
 
 case "$1" in
-t)	tagversion;
-	;;
+t)	tagversion;;
 e) 	vi -p $(grep -v '^#' .edit) .edit
 	ls *.go|xargs -n1 gofmt -s -w
-	execute;
-	;;
-u)	updatelibs
-	;;
-"")	execute
-	;;
+	execute;;
+u)	updatelibs;;
+c)	~/bin/go.coverage;;
+"")	execute;;
 esac
