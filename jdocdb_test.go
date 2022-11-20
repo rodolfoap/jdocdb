@@ -218,26 +218,26 @@ func Test_lib(t *testing.T) {
 	// map[ant:{...} chicken:{...} dog:{...}], COUNT: 3; SUM(Legs): 11.
 
 	legs := 0
-	animalCount := CountWhereAggreg(Animal{}, hasLongNameOrBeak, &legs, func(id string, a Animal) { legs += a.Legs })
+	quantity := CountWhereAggreg(Animal{}, hasLongNameOrBeak, &legs, func(id string, a Animal) { legs += a.Legs })
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
-	// animalCount == 3 and legs == 11
-	fmt.Printf("Simpler, COUNT: %v; SUM(Legs): %v.\n", animalCount, legs)
-	assert.Equal(t, animalCount, 3)
+	// quantity == 3 and legs == 11
+	fmt.Printf("Simpler, COUNT: %v; SUM(Legs): %v.\n", quantity, legs)
+	assert.Equal(t, quantity, 3)
 	assert.Equal(t, legs, 11)
 
 	legs = 0
-	animalCount = CountAggreg(Animal{}, &legs, func(id string, a Animal) { legs += a.Legs })
+	quantity = CountAggreg(Animal{}, &legs, func(id string, a Animal) { legs += a.Legs })
 	// map[ant:{Woody 5 true} cat:{Watson 3 false} chicken:{Clotilde 2 true} dinosaur:{Barney 2 false} dog:{Wallander, Mortimer 4 false}]
-	// animalCount == 5 and legs == 16
-	fmt.Printf("Even simpler, COUNT: %v; SUM(Legs): %v.\n", animalCount, legs)
-	assert.Equal(t, animalCount, 5)
+	// quantity == 5 and legs == 16
+	fmt.Printf("Even simpler, COUNT: %v; SUM(Legs): %v.\n", quantity, legs)
+	assert.Equal(t, quantity, 5)
 	assert.Equal(t, legs, 16)
 
-	animalCount = Count(Animal{})
+	quantity = Count(Animal{})
 	// map[ant:{Woody 5 true} cat:{Watson 3 false} chicken:{Clotilde 2 true} dinosaur:{Barney 2 false} dog:{Wallander, Mortimer 4 false}]
-	// animalCount == 5
-	fmt.Printf("Bare COUNT: %v.\n", animalCount)
-	assert.Equal(t, animalCount, 5)
+	// quantity == 5
+	fmt.Printf("Bare COUNT: %v.\n", quantity)
+	assert.Equal(t, quantity, 5)
 
 	// Delete function
 	Delete("p0926", Person{})
