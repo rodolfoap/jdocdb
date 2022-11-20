@@ -195,7 +195,7 @@ func Test_lib(t *testing.T) {
 		Making a single aggregation, example: SELECT ... COUNT(*) AS sum
 	*/
 	sum := 0
-	animals = SelectWhereAggreg(Animal{}, hasLongNameOrBeak, &sum, func(a Animal) { sum += a.Legs })
+	animals = SelectWhereAggreg(Animal{}, hasLongNameOrBeak, &sum, func(id string, a Animal) { sum += a.Legs })
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
 	// sum == 11
 	assert.Len(t, animals, 3)
@@ -207,7 +207,7 @@ func Test_lib(t *testing.T) {
 		Making multiple aggregations, example: SELECT ... COUNT(*) AS x0, SUM(Legs) AS x1
 	*/
 	x := []int{0, 0}
-	animals = SelectWhereAggreg(Animal{}, hasLongNameOrBeak, &x, func(a Animal) { x[0] += 1; x[1] += a.Legs })
+	animals = SelectWhereAggreg(Animal{}, hasLongNameOrBeak, &x, func(id string, a Animal) { x[0] += 1; x[1] += a.Legs })
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
 	// sum == 11
 	assert.Len(t, animals, 3)

@@ -106,10 +106,10 @@ func SelectIdWhere[T interface{}](doc T, cond func(T) bool, prefix ...string) []
 //	aggregator *A: A pointer reference to a user variable, which is available during the internal processing loop, to calculate aggregates. Could be a slice or a struct.
 //	aggregate func(): A user-defined function that fills up the aggregator variable(s).
 //	prefix...: Only used to read the prefix (table location, or ./) and the suffix (table directory or lowecase(type)).
-func SelectWhereAggreg[T interface{}, A interface{}](doc T, cond func(T) bool, aggregator *A, aggregate func(T), prefix ...string) map[string]T {
+func SelectWhereAggreg[T interface{}, A interface{}](doc T, cond func(T) bool, aggregator *A, aggregate func(string, T), prefix ...string) map[string]T {
 	docs := SelectWhere(doc, cond, prefix...)
-	for _, val := range docs {
-		aggregate(val)
+	for key, val := range docs {
+		aggregate(key, val)
 	}
 	gx.Trace("JDocDB SELECT_ID_WHERE_GROUP: ", docs, *aggregator)
 	return docs
