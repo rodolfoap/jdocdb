@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/rodolfoap/gx"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -45,7 +44,7 @@ func Insert[T interface{}](id string, doc T, prefix ...string) {
 	jsonBytes, err := json.MarshalIndent(reg, "", "\t")
 	gx.Error(err)
 	jsonBytes = append(jsonBytes, byte('\n'))
-	err = ioutil.WriteFile(jsonPath, jsonBytes, 0644)
+	err = os.WriteFile(jsonPath, jsonBytes, 0644)
 	gx.Fatal(err)
 	gx.Tracef("JDocDB INSERT: %v", jsonPath)
 }
@@ -56,7 +55,7 @@ func Select[T interface{}](id string, doc T, prefix ...string) T {
 	reg := Register{Id: id, Data: &doc}
 	table := buildPath(GetType(doc), prefix...)
 	jsonPath := filepath.Join(table, id+".json")
-	jsonBytes, err := ioutil.ReadFile(jsonPath)
+	jsonBytes, err := os.ReadFile(jsonPath)
 	if err != nil {
 		gx.Tracef("Data file %v not found.", jsonPath)
 		return doc
@@ -73,7 +72,7 @@ func Select[T interface{}](id string, doc T, prefix ...string) T {
 func SelectIds[T interface{}](doc T, prefix ...string) []string {
 	idList := []string{}
 	table := buildPath(GetType(doc), prefix...)
-	fileList, err := ioutil.ReadDir(table)
+	fileList, err := os.ReadDir(table)
 	gx.Error(err)
 	for _, f := range fileList {
 		if strings.HasSuffix(f.Name(), ".json") {
@@ -118,7 +117,7 @@ func SelectIdWhere[T interface{}](doc T, cond func(T) bool, prefix ...string) []
 }
 
 // Selects all rows that meet some conditions, prefix is a set of dir/subdirectories
-func SelectWhereGroup[T interface{}, A interface{}](doc T, cond func(T) bool, aggregator *A, aggregate func(T), prefix ...string) map[string]T {
+func SelectWhereAggreg[T interface{}, A interface{}](doc T, cond func(T) bool, aggregator *A, aggregate func(T), prefix ...string) map[string]T {
 	docs := SelectWhere(doc, cond, prefix...)
 	for _, val := range docs {
 		aggregate(val)
@@ -140,4 +139,13 @@ func Keys[M ~map[K]V, K comparable, V any](m M) []K {
 		r = append(r, k)
 	}
 	return r
+}
+
+// Deletes one registry from a table using its ID, prefix is a set of dir/subdirectories
+func Delete[T interface{}](id string, doc T, prefix ...string) {
+	table := buildPath(GetType(doc), prefix...)
+	jsonPath := filepath.Join(table, id+".json")
+	err := os.Remove(jsonPath)
+	gx.Fatal(err)
+	gx.Tracef("JDocDB DELETE: %v", jsonPath)
 }
