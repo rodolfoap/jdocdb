@@ -126,6 +126,13 @@ func CountWhereAggreg[T interface{}, A interface{}](doc T, cond func(T) bool, ag
 	return _count
 }
 
+// Equivalent to SelectWhereAggreg() except that it returns just a count
+func CountWhere[T interface{}](doc T, cond func(T) bool, prefix ...string) int {
+	docs := SelectWhere(doc, cond, prefix...)
+	gx.Trace("JDocDB COUNT_WHERE: ", len(docs))
+	return len(docs)
+}
+
 // Equivalent to CountWhereAggreg() except without WHERE conditionals
 func CountAggreg[T interface{}, A interface{}](doc T, aggregator *A, aggregate func(string, T), prefix ...string) int {
 	_docs, _count := SelectAll(doc, prefix...), 0
@@ -142,6 +149,32 @@ func Count[T interface{}](doc T, prefix ...string) int {
 	docs := SelectAll(doc, prefix...)
 	gx.Trace("JDocDB COUNT: ", len(docs))
 	return len(docs)
+}
+
+// Simple count of all registers
+func Sum[T interface{}](doc T, fieldName string, prefix ...string) int {
+	_docs, _sum := SelectAll(doc, prefix...), 0
+	for _, val := range _docs {
+		// Using package reflections
+		value, err := GetField(val, fieldName)
+		gx.Fatal(err)
+		_sum += value.(int)
+	}
+	gx.Trace("JDocDB SUM: ", _sum)
+	return _sum
+}
+
+// Simple count of all registers
+func SumWhere[T interface{}](doc T, fieldName string, cond func(T) bool, prefix ...string) int {
+	_docs, _sum := SelectWhere(doc, cond, prefix...), 0
+	for _, val := range _docs {
+		// Using package reflections
+		value, err := GetField(val, fieldName)
+		gx.Fatal(err)
+		_sum += value.(int)
+	}
+	gx.Trace("JDocDB SUM: ", _sum)
+	return _sum
 }
 
 // Deletes one registry from a table using its ID, prefix is a set of dir/subdirectories

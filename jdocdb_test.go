@@ -233,11 +233,27 @@ func Test_lib(t *testing.T) {
 	assert.Equal(t, quantity, 5)
 	assert.Equal(t, legs, 16)
 
+	quantity = CountWhere(Animal{}, hasLongNameOrBeak)
+	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
+	// quantity == 5 and legs == 16
+	fmt.Printf("COUNT WHERE: %v.\n", quantity)
+	assert.Equal(t, quantity, 3)
+
 	quantity = Count(Animal{})
 	// map[ant:{Woody 5 true} cat:{Watson 3 false} chicken:{Clotilde 2 true} dinosaur:{Barney 2 false} dog:{Wallander, Mortimer 4 false}]
 	// quantity == 5
 	fmt.Printf("Bare COUNT: %v.\n", quantity)
 	assert.Equal(t, quantity, 5)
+
+	// SUM example
+	quantLegs := Sum(Animal{}, "Legs")
+	assert.Equal(t, quantLegs, 16)
+	fmt.Printf("SUM: %v.\n", quantLegs)
+
+	// SUM WHERE example
+	quantLegs = SumWhere(Animal{}, "Legs", hasLongNameOrBeak)
+	assert.Equal(t, quantLegs, 11)
+	fmt.Printf("SUM WHERE: %v.\n", quantLegs)
 
 	// Delete function
 	Delete("p0926", Person{})
