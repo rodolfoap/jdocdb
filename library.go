@@ -107,12 +107,41 @@ func SelectIdWhere[T interface{}](doc T, cond func(T) bool, prefix ...string) []
 //	aggregate func(): A user-defined function that fills up the aggregator variable(s).
 //	prefix...: Only used to read the prefix (table location, or ./) and the suffix (table directory or lowecase(type)).
 func SelectWhereAggreg[T interface{}, A interface{}](doc T, cond func(T) bool, aggregator *A, aggregate func(string, T), prefix ...string) map[string]T {
-	docs := SelectWhere(doc, cond, prefix...)
-	for key, val := range docs {
+	_docs := SelectWhere(doc, cond, prefix...)
+	for _key, _val := range _docs {
+		aggregate(_key, _val)
+	}
+	gx.Trace("JDocDB SELECT_ID_WHERE_AGGREG: ", _docs, *aggregator)
+	return _docs
+}
+
+// Equivalent to SelectWhereAggreg() except that it returns just a count
+func CountWhereAggreg[T interface{}, A interface{}](doc T, cond func(T) bool, aggregator *A, aggregate func(string, T), prefix ...string) int {
+	_docs, _count := SelectWhere(doc, cond, prefix...), 0
+	for key, val := range _docs {
+		_count += 1
 		aggregate(key, val)
 	}
-	gx.Trace("JDocDB SELECT_ID_WHERE_GROUP: ", docs, *aggregator)
-	return docs
+	gx.Trace("JDocDB COUNT_WHERE_AGGREG: ", _docs, *aggregator)
+	return _count
+}
+
+// Equivalent to CountWhereAggreg() except without WHERE conditionals
+func CountAggreg[T interface{}, A interface{}](doc T, aggregator *A, aggregate func(string, T), prefix ...string) int {
+	_docs, _count := SelectAll(doc, prefix...), 0
+	for key, val := range _docs {
+		_count += 1
+		aggregate(key, val)
+	}
+	gx.Trace("JDocDB COUNT_AGGREG: ", _docs, *aggregator)
+	return _count
+}
+
+// Simple count of all registers
+func Count[T interface{}](doc T, prefix ...string) int {
+	docs := SelectAll(doc, prefix...)
+	gx.Trace("JDocDB COUNT: ", len(docs))
+	return len(docs)
 }
 
 // Deletes one registry from a table using its ID, prefix is a set of dir/subdirectories
