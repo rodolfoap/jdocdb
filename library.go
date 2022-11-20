@@ -1,12 +1,13 @@
+// A Golang JSON document-file based database allowing complex SELECT queries and multiple aggregations.
 package jdocdb
 
 import (
 	"encoding/json"
-	"fmt"
-	"github.com/rodolfoap/gx"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/rodolfoap/gx"
 )
 
 // Structure used for unmarshaling each register. The Id value is generated and
@@ -16,29 +17,10 @@ type Register struct {
 	Data interface{}
 }
 
-// Prefix and suffix handling:
-//
-//	a) prefix_suffix ...string is [prefix, suffix, ignored, ignored...]string
-//	   in other words, prefix==prefix_suffix[0], suffix==prefix_suffix[1].
-//	b) If NO PREFIX is specified, the path will be ./person/;
-//	c) If PREFIX=data, the path will be ./data/person/;
-//	d) If SUFFIX=people, the path will be ./data/people/.
-func buildPath(baseName string, prefix_suffix ...string) string {
-	prefix, suffix := "", baseName
-	if len(prefix_suffix) > 0 {
-		prefix = prefix_suffix[0]
-	}
-	if len(prefix_suffix) > 1 {
-		suffix = prefix_suffix[1]
-	}
-	buildPath := filepath.Clean(filepath.Join(prefix, suffix)) + "/"
-	return buildPath
-}
-
 // Inserts one registry into a table using its ID, prefix is a set of dir/subdirectories
 func Insert[T interface{}](id string, doc T, prefix ...string) {
 	reg := Register{Id: id, Data: doc}
-	table := buildPath(GetType(doc), prefix...)
+	table := buildPath(getType(doc), prefix...)
 	os.MkdirAll(table, 0755)
 	jsonPath := filepath.Join(table, id+".json")
 	jsonBytes, err := json.MarshalIndent(reg, "", "\t")
@@ -53,7 +35,7 @@ func Insert[T interface{}](id string, doc T, prefix ...string) {
 // This just reads a single file, unmarshals it and returns a (generic) structure.
 func Select[T interface{}](id string, doc T, prefix ...string) T {
 	reg := Register{Id: id, Data: &doc}
-	table := buildPath(GetType(doc), prefix...)
+	table := buildPath(getType(doc), prefix...)
 	jsonPath := filepath.Join(table, id+".json")
 	jsonBytes, err := os.ReadFile(jsonPath)
 	if err != nil {
@@ -71,7 +53,7 @@ func Select[T interface{}](id string, doc T, prefix ...string) T {
 // since IDs are just filename prefixes.
 func SelectIds[T interface{}](doc T, prefix ...string) []string {
 	idList := []string{}
-	table := buildPath(GetType(doc), prefix...)
+	table := buildPath(getType(doc), prefix...)
 	fileList, err := os.ReadDir(table)
 	gx.Error(err)
 	for _, f := range fileList {
@@ -91,7 +73,7 @@ func SelectAll[T interface{}](doc T, prefix ...string) map[string]T {
 	for _, id := range SelectIds(doc, prefix...) {
 		docs[id] = Select(id, doc, prefix...)
 	}
-	gx.Tracef("JDocDB SELECT_ALL: %v/%v", strings.Join(prefix, "/"), Keys(docs))
+	gx.Tracef("JDocDB SELECT_ALL: %v/%v", strings.Join(prefix, "/"), keys(docs))
 	return docs
 }
 
@@ -111,12 +93,19 @@ func SelectWhere[T interface{}](doc T, cond func(T) bool, prefix ...string) map[
 // Selects all rows that meet the conditions provided in the passing function, prefix
 // is a set of dir/subdirectories.
 func SelectIdWhere[T interface{}](doc T, cond func(T) bool, prefix ...string) []string {
-	keys := Keys(SelectWhere(doc, cond, prefix...))
+	keys := keys(SelectWhere(doc, cond, prefix...))
 	gx.Trace("JDocDB SELECT_ID_WHERE: ", keys)
 	return keys
 }
 
-// Selects all rows that meet some conditions, prefix is a set of dir/subdirectories
+// Selects all rows that meet some conditions, prefix is a set of dir/subdirectories.
+// Parameters:
+//
+//	doc T: Any user-defined type struct, for example, {Person}
+//	cond func(): A user-defined type taking the previous struct and yielding a boolean. Every entry is compared to consider is it is returned.
+//	aggregator *A: A pointer reference to a user variable, which is available during the internal processing loop, to calculate aggregates. Could be a slice or a struct.
+//	aggregate func(): A user-defined function that fills up the aggregator variable(s).
+//	prefix...: Only used to read the prefix (table location, or ./) and the suffix (table directory or lowecase(type)).
 func SelectWhereAggreg[T interface{}, A interface{}](doc T, cond func(T) bool, aggregator *A, aggregate func(T), prefix ...string) map[string]T {
 	docs := SelectWhere(doc, cond, prefix...)
 	for _, val := range docs {
@@ -126,24 +115,9 @@ func SelectWhereAggreg[T interface{}, A interface{}](doc T, cond func(T) bool, a
 	return docs
 }
 
-// Returns a lowercase string with the type name for path finding.
-func GetType(doc interface{}) string {
-	return strings.ToLower(strings.SplitN(fmt.Sprintf("%T", doc), ".", 2)[1])
-}
-
-// Keys returns the keys of the map m. Keys will be in an indeterminate order. Taken
-// from https://github.com/golang/exp/blob/master/maps/maps.go which is subject to change
-func Keys[M ~map[K]V, K comparable, V any](m M) []K {
-	r := make([]K, 0, len(m))
-	for k := range m {
-		r = append(r, k)
-	}
-	return r
-}
-
 // Deletes one registry from a table using its ID, prefix is a set of dir/subdirectories
 func Delete[T interface{}](id string, doc T, prefix ...string) {
-	table := buildPath(GetType(doc), prefix...)
+	table := buildPath(getType(doc), prefix...)
 	jsonPath := filepath.Join(table, id+".json")
 	err := os.Remove(jsonPath)
 	gx.Fatal(err)

@@ -2,8 +2,9 @@ package jdocdb
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // First, define the structure of your tables
