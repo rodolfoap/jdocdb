@@ -15,6 +15,7 @@ A minimalist file-based JSON documents database with the capability of complex S
 	* `SelectIds(struct, tableLocation)`: "SELECT ID FROM TABLE;", producing a slice of strings.
 	* `SelectAll(struct, tableLocation)`: "SELECT * FROM TABLE;", producing a map[id]_struct_ (a map of structs, where the index is the table ID)
 	* `SelectWhere(struct, function, tableLocation)`: "SELECT * FROM TABLE WHERE conditions;", producing a map[id]_struct_ (a map of structs, where the index is the table ID), according to a function, which can be a closure, a nested or a common function.
+	* `SelectWhereGroup(struct, function, tableLocation)`: "SELECT AGGREGATE_FUNCTION(...) FROM TABLE WHERE conditions GROUP BY ...;", producing a map[id]_struct_ (a map of structs, where the index is the table ID), according to a function, which can be a closure, a nested or a common function.
 
 ## Example usage
 
