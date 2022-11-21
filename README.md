@@ -104,7 +104,7 @@ func main() {
 
 		Example with db.Insert, usage:
 
-		db.db.Insert(KEY, STRUCT, [ PREFIX [, SUFFIX] ])
+		db.Insert(KEY, STRUCT, [ PREFIX [, SUFFIX] ])
 	*/
 
 	db.Insert("p0926", Person{"James", 33, false})
@@ -197,7 +197,7 @@ func main() {
 	SELECT * FROM [TABLE] WHERE [CONDITIONS...]; are possible using Golang func types
 	that are passed as arguments. See the following examples with db.SelectWhere:
 
-	db.db.SelectWhere(EMPTY_STRUCT, func(p Table) bool, [ PREFIX [, SUFFIX] ])
+	db.SelectWhere(EMPTY_STRUCT, func(p Table) bool, [ PREFIX [, SUFFIX] ])
 
 	*/
 
