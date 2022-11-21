@@ -209,7 +209,7 @@ func main() {
 	fmt.Println("IDs for Has Long Name Or Beak:", animalIDs)
 
 	/*
-		Making a single aggregation, example: SELECT ... SUM(*) AS sum
+		Making a single aggregation, example: SELECT ... SUM(*) AS sum WHERE...
 	*/
 	sum := 0
 	animals = db.SelectWhereAggreg(Animal{}, hasLongNameOrBeak, &sum, func(id string, a Animal) { sum += a.Legs })
@@ -229,7 +229,6 @@ func main() {
 
 	x = []int{0, 0}
 	animals = db.SelectAggreg(Animal{}, &x, func(id string, a Animal) { x[0] += 1; x[1] += a.Legs })
-	fmt.Printf("AGGREG *************************-> %v\n", animals)
 	// map[ant:{Woody 5 true} cat:{Watson 3 false} chicken:{Clotilde 2 true} dinosaur:{Barney 2 false} dog:{Wallander, Mortimer 4 false}]
 	fmt.Printf("%v, COUNT: %v; SUM(Legs): %v.\n", animals, x[0], x[1])
 	// map[ant:{...} chicken:{...} dog:{...}], COUNT: 3; SUM(Legs): 11.
