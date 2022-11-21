@@ -40,3 +40,12 @@ func buildPath(baseName string, prefix_suffix ...string) string {
 	buildPath := filepath.Clean(filepath.Join(prefix, suffix)) + "/"
 	return buildPath
 }
+
+// A simple sum, waiting to find a proper mathematical statistics package.
+func sum[T int](array []T) T {
+	var result T = 0
+	for _, v := range array {
+		result += v
+	}
+	return result
+}

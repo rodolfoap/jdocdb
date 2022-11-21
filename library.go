@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/rodolfoap/gx"
@@ -151,30 +152,28 @@ func Count[T interface{}](doc T, prefix ...string) int {
 	return len(docs)
 }
 
-// Simple count of all registers
+// Simple sum of all registers
 func Sum[T interface{}](doc T, fieldName string, prefix ...string) int {
 	_docs, _sum := SelectAll(doc, prefix...), 0
-	for _, val := range _docs {
-		// Using package reflections
-		value, err := GetField(val, fieldName)
-		gx.Fatal(err)
-		_sum += value.(int)
+	var data []int
+	for _, doc := range _docs {
+		data = append(data, int(reflect.Indirect(reflect.ValueOf(doc)).FieldByName(fieldName).Int()))
 	}
-	gx.Trace("JDocDB SUM: ", _sum)
-	return _sum
+	gx.Trace("JDocDB SUM: ", _sum, data)
+	// Getting an array would simplify a lot any future aggregate calculation.
+	return sum(data)
 }
 
-// Simple count of all registers
+// Simple sum of all registers fulfilling a WHERE condition
 func SumWhere[T interface{}](doc T, fieldName string, cond func(T) bool, prefix ...string) int {
 	_docs, _sum := SelectWhere(doc, cond, prefix...), 0
-	for _, val := range _docs {
-		// Using package reflections
-		value, err := GetField(val, fieldName)
-		gx.Fatal(err)
-		_sum += value.(int)
+	var data []int
+	for _, doc := range _docs {
+		data = append(data, int(reflect.Indirect(reflect.ValueOf(doc)).FieldByName(fieldName).Int()))
 	}
-	gx.Trace("JDocDB SUM: ", _sum)
-	return _sum
+	gx.Trace("JDocDB SUM: ", _sum, data)
+	// Getting an array would simplify a lot any future aggregate calculation.
+	return sum(data)
 }
 
 // Deletes one registry from a table using its ID, prefix is a set of dir/subdirectories

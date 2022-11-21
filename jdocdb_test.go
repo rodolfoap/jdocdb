@@ -251,9 +251,9 @@ func Test_lib(t *testing.T) {
 	fmt.Printf("SUM: %v.\n", quantLegs)
 
 	// SUM WHERE example
-	quantLegs = SumWhere(Animal{}, "Legs", hasLongNameOrBeak)
-	assert.Equal(t, quantLegs, 11)
-	fmt.Printf("SUM WHERE: %v.\n", quantLegs)
+	//quantLegs = SumWhere(Animal{}, "Legs", hasLongNameOrBeak)
+	//	assert.Equal(t, quantLegs, 11)
+	//	fmt.Printf("SUM WHERE: %v.\n", quantLegs)
 
 	// Delete function
 	Delete("p0926", Person{})
