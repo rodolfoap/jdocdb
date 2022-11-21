@@ -209,7 +209,7 @@ func main() {
 	fmt.Println("IDs for Has Long Name Or Beak:", animalIDs)
 
 	/*
-		Making a single aggregation, example: SELECT ... COUNT(*) AS sum
+		Making a single aggregation, example: SELECT ... SUM(*) AS sum
 	*/
 	sum := 0
 	animals = db.SelectWhereAggreg(Animal{}, hasLongNameOrBeak, &sum, func(id string, a Animal) { sum += a.Legs })
