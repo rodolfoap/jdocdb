@@ -22,7 +22,8 @@ type Register struct {
 func Insert[T interface{}](id string, doc T, prefix ...string) {
 	reg := Register{Id: id, Data: doc}
 	table := buildPath(getType(doc), prefix...)
-	os.MkdirAll(table, 0755)
+	err := os.MkdirAll(table, 0755)
+	gx.Fatal(err)
 	jsonPath := filepath.Join(table, id+".json")
 	jsonBytes, err := json.MarshalIndent(reg, "", "\t")
 	gx.Error(err)

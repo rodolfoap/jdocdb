@@ -4,6 +4,7 @@ execute(){
 	rm -f golib
 	go mod tidy
 	BDEBUG=1 go test -v -covermode=count -coverprofile=profile.cov
+	golangci-lint run
 }
 updatelibs(){
 	go get -u github.com/rodolfoap/gx@$(cat ~/git/gx/VERSION)
