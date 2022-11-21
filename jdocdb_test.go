@@ -204,7 +204,7 @@ func Test_lib(t *testing.T) {
 	fmt.Printf("%v, have a total of %v Legs.\n", animals, sum)
 
 	/*
-		Making multiple aggregations, example: SELECT ... COUNT(*) AS x0, SUM(Legs) AS x1
+		Making multiple aggregations, example: SELECT ... COUNT(*) AS x0, SUM(Legs) AS x1 WHERE...
 	*/
 	x := []int{0, 0}
 	animals = SelectWhereAggreg(Animal{}, hasLongNameOrBeak, &x, func(id string, a Animal) { x[0] += 1; x[1] += a.Legs })
@@ -214,6 +214,17 @@ func Test_lib(t *testing.T) {
 	assert.Contains(t, animals, "ant", "chicken", "dog")
 	assert.Equal(t, x[0], 3)  // COUNT(*)
 	assert.Equal(t, x[1], 11) // SUM(Legs)
+	fmt.Printf("%v, COUNT: %v; SUM(Legs): %v.\n", animals, x[0], x[1])
+	// map[ant:{...} chicken:{...} dog:{...}], COUNT: 3; SUM(Legs): 11.
+
+	x = []int{0, 0}
+	animals = SelectAggreg(Animal{}, &x, func(id string, a Animal) { x[0] += 1; x[1] += a.Legs })
+	fmt.Printf("AGGREG *************************-> %v\n", animals)
+	// map[ant:{Woody 5 true} cat:{Watson 3 false} chicken:{Clotilde 2 true} dinosaur:{Barney 2 false} dog:{Wallander, Mortimer 4 false}]
+	assert.Len(t, animals, 5)
+	assert.Contains(t, animals, "ant", "cat", "chicken", "dinosaur", "dog")
+	assert.Equal(t, x[0], 5)  // COUNT(*)
+	assert.Equal(t, x[1], 16) // SUM(Legs)
 	fmt.Printf("%v, COUNT: %v; SUM(Legs): %v.\n", animals, x[0], x[1])
 	// map[ant:{...} chicken:{...} dog:{...}], COUNT: 3; SUM(Legs): 11.
 

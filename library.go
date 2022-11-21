@@ -112,7 +112,17 @@ func SelectWhereAggreg[T interface{}, A interface{}](doc T, cond func(T) bool, a
 	for _key, _val := range _docs {
 		aggregate(_key, _val)
 	}
-	gx.Trace("JDocDB SELECT_ID_WHERE_AGGREG: ", _docs, *aggregator)
+	gx.Trace("JDocDB SELECT_WHERE_AGGREG: ", _docs, *aggregator)
+	return _docs
+}
+
+// Equivalent to SelectWhereAggreg() except without WHERE clause.
+func SelectAggreg[T interface{}, A interface{}](doc T, aggregator *A, aggregate func(string, T), prefix ...string) map[string]T {
+	_docs := SelectAll(doc, prefix...)
+	for _key, _val := range _docs {
+		aggregate(_key, _val)
+	}
+	gx.Trace("JDocDB SELECT_AGGREG: ", _docs, *aggregator)
 	return _docs
 }
 

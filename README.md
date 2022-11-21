@@ -5,17 +5,29 @@
 [![GitHub go.mod Go version of a Go module](https://img.shields.io/github/go-mod/go-version/gomods/athens.svg)](https://github.com/gomods/athens)
 [![GPLv3 license](https://img.shields.io/badge/License-GPLv3-blue.svg)](http://perso.crans.org/besson/LICENSE.html)
 
-A minimalist file-based JSON documents database with the capability of complex SELECT WHERE operations over a single table.
+A minimalist file-based JSON documents database with the capability of complex SELECT WHERE operations and multiple aggregations over a single table.
 
-* Tables are subdirectories, e.g. `./clients/`;
-* Registries are files, e.g. `./clients/a929782.json`;
-* Filenames are registry IDs, e.g. `./clients/a929782.json` has `ID==a929782`;
-* SQL SELECT equivalents are:
-	* `Select(id, struct, tableLocation)`: "SELECT * FROM TABLE WHERE ID=id;", producing a single _struct_.
-	* `SelectIds(struct, tableLocation)`: "SELECT ID FROM TABLE;", producing a slice of strings.
-	* `SelectAll(struct, tableLocation)`: "SELECT * FROM TABLE;", producing a map[id]_struct_ (a map of structs, where the index is the table ID)
-	* `SelectWhere(struct, function, tableLocation)`: "SELECT * FROM TABLE WHERE conditions;", producing a map[id]_struct_ (a map of structs, where the index is the table ID), according to a function, which can be a closure, a nested or a common function.
-	* `SelectWhereAggreg(struct, function, tableLocation)`: "SELECT AGGREGATE_FUNCTION(...) FROM TABLE WHERE conditions GROUP BY ...;", producing a map[id]_struct_ (a map of structs, where the index is the table ID), according to a function, which can be a closure, a nested or a common function.
+* Tables are subdirectories, e.g. `/tmp/clients/`;
+* Registries are files, e.g. `/tmp/clients/a929782.json` that map to golang _structs_.
+* Filenames are registry IDs, e.g. `/tmp/clients/a929782.json` has `ID==a929782`;
+
+`SQL SELECT` equivalents are:
+
+* `SELECT * FROM mytype;`: SelectAll(MyType{}, tableLocation), producing a **map[id]_struct_** (a map of _MyType_ structs, where the index is the register ID)
+* `SELECT ID FROM mytype;`: `SelectIds(MyType{}, tableLocation)`, producing a slice of string IDs.
+* `SELECT * FROM mytype WHERE ID=id;`: `Select(id, MyType{}, tableLocation)`, producing a single _struct_, the ID is necessarily unique.
+* `SELECT * FROM mytype WHERE conditions...;`: `SelectWhere(MyType{}, conditionsFunction, tableLocation)`, producing a map[id]_struct_ (a map of _MyType_ structs, where the index is the table ID), according to a function, which can be a closure, a nested or a common function.
+* `SELECT some_aggregate_function(...) FROM mytype;"`: `SelectAggreg(MyType, &aggregationVariable, aggregationFunction, tableLocation)`, producing a map[id]_struct_ (a map of _MyType_ structs, where the index is the table ID), according to a function, which can be a closure, a nested or a common function.
+* `SELECT some_aggregate_function(...) FROM mytype WHERE conditions ...;"`: `SelectWhereAggreg(MyType, function, &aggregationVariable, aggregationFunction, tableLocation)`, producing a map[id]_struct_ (a map of _MyType_ structs, where the index is the table ID), according to a function, which can be a closure, a nested or a common function.
+* `SELECT ID FROM mytype WHERE conditions...;`: `SelectIdWhere(MyType{}, conditionsFunction, tableLocation)`, producing a slice of string IDs, according to a function, which can be a closure, a nested or a common function.
+* `SELECT SUM(myfield) FROM mytype;`: `Sum(MyType{}, "myfield", tableLocation)`, producing a slice of string IDs, using a string to locate the field to sum (evidently, a single sum). This function can be easily implemented with `SelectAggreg()` or `SelectWhereAggreg()` and it is provided just for simplicity.
+* `SELECT SUM(myfield) FROM mytype WHERE conditions...;`: `SumWhere(MyType{}, conditionsFunction, tableLocation)`, producing a slice of string IDs, according to a function, which can be a closure, a nested or a common function. Notice there's no `SumWhereAggreg()` function, since SUM is already an aggregation.
+* `SELECT COUNT(*) FROM mytype;`: `db.Count(MyType{}, tableLocation)`, yielding an **int**. Provided for simplicity.
+* `SELECT COUNT(*) FROM mytype WHERE conditions...;`: `db.CountWhere(MyType{}, conditionsFunction, tableLocation)`, yielding an **int**, see `SelectWhere()`.
+* `SELECT COUNT(*), some_aggregate_function(...) FROM mytype;`: `db.CountAggreg(MyType{}, &aggregationVariable, aggregationFunction, tableLocation)`, yielding an **int**, see `SelectAggreg()`. If only aggregation results are required, use `db.CountAggreg()` instead of `SelectAggreg()`.
+* `SELECT COUNT(*), some_aggregate_function(...) FROM mytype WHERE conditions...;`: `db.CountWhereAggreg(MyType{}, conditionsFunction, tableLocation)`, yielding an **int**, see `SelectWhereAggreg()`.
+* `DELETE FROM mytype WHERE ID=id;`: `db.Delete(MyType{}, tableLocation)`, simple deletion. There is no table delete, just remove the directory where the registers are.
+* `INSERT INTO mytype VALUES ...;`: `db.Insert(MyType{}, tableLocation)`, simple _upsert_ function.
 
 ## Example usage
 
@@ -113,22 +125,22 @@ func main() {
 	*/
 
 	/* Usage: db.Select(KEY, EMPTY_STRUCT, [ PREFIX [, SUFFIX] ]) */
-	jonas:=db.Select("q9823", Person{})
+	jonas := db.Select("q9823", Person{})
 	// {Jonas 44 true}, jdocdb.Person, 44
 	fmt.Printf("%v, %T, %v\n", jonas, jonas, jonas.Age)
 
 	/* Usage: db.SelectIds(EMPTY_STRUCT, [ PREFIX [, SUFFIX] ]) */
-	listIds:=db.SelectIds(Person{})
+	listIds := db.SelectIds(Person{})
 	// [n9878 p0926 q9823 r8791]
 	fmt.Println(listIds)
 
 	/* Usage: db.SelectAll(EMPTY_STRUCT, [ PREFIX [, SUFFIX] ]) */
-	m:=db.SelectAll(Person{})
+	m := db.SelectAll(Person{})
 	// map[n9878:{Junge 55 true} p0926:{James 33 false} q9823:{Jonas 44 true} r8791:{Jonna 33 false}]
 	fmt.Println(m)
 
 	// A bad SELECT: file does not exist
-	jojo:=db.Select("a7654", Person{})
+	jojo := db.Select("a7654", Person{})
 	fmt.Printf("This is just empty: %v\n", jojo)
 
 	/* Complex Queries: do whatever query emulating a SELECT*FROM [TABLE] WHERE [CONDITIONS...] */
@@ -136,23 +148,23 @@ func main() {
 	/* Do not forget to declare the structure as a Table, see the top of this file */
 
 	/*
-		SELECT*FROM Person WHERE AGE==55
+		SELECT * FROM Person WHERE AGE == 55
 	*/
-	filtered:=db.SelectWhere(Person{}, func(p Person) bool { return p.Age==55 })
+	filtered := db.SelectWhere(Person{}, func(p Person) bool { return p.Age == 55 })
 	// map[n9878:{Junge 55 true} r8791:{Jonna 55 false}]
 	fmt.Println("Having 55:", filtered)
 
 	/*
-		SELECT*FROM Person WHERE NOT Sex
+		SELECT * FROM Person WHERE NOT Sex
 	*/
-	filtered=db.SelectWhere(Person{}, func(p Person) bool { return !p.Sex })
+	filtered = db.SelectWhere(Person{}, func(p Person) bool { return !p.Sex })
 	// map[p0926:{James 33 false} r8791:{Jonna 55 false}]
 	fmt.Println("Have not Sex:", filtered)
 
 	/*
-		SELECT*FROM Person WHERE Sex AND AGE==55
+		SELECT * FROM Person WHERE Sex AND AGE == 55
 	*/
-	filtered=db.SelectWhere(Person{}, func(p Person) bool { return p.Sex && p.Age==55 })
+	filtered = db.SelectWhere(Person{}, func(p Person) bool { return p.Sex && p.Age == 55 })
 	// map[n9878:{Junge 55 true}]
 	fmt.Println("Have Sex and 55:", filtered)
 
@@ -174,69 +186,76 @@ func main() {
 	*/
 
 	// A nested function, any kind of function will do.
-	hasLongNameOrBeak:=func(a Animal) bool { return len(a.Name)>6 || a.Beak }
+	hasLongNameOrBeak := func(a Animal) bool { return len(a.Name) > 6 || a.Beak }
 
 	/*
-		Example SELECT*WHERE LEN(name)>6 OR Beak
+		Example SELECT * WHERE LEN(name)>6 OR Beak
 	*/
-	animals:=db.SelectWhere(Animal{}, hasLongNameOrBeak)
+	animals := db.SelectWhere(Animal{}, hasLongNameOrBeak)
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
 	fmt.Println("Has Long Name Or Beak:", animals)
 
 	/*
 		Example SELECT ID WHERE LEN(name)>6 OR Beak
 	*/
-	animalIDs:=db.SelectIdWhere(Animal{}, hasLongNameOrBeak)
+	animalIDs := db.SelectIdWhere(Animal{}, hasLongNameOrBeak)
 	// [chicken dog ant]
 	fmt.Println("IDs for Has Long Name Or Beak:", animalIDs)
 
 	/*
 		Making a single aggregation, example: SELECT ... COUNT(*) AS sum
 	*/
-	sum:=0
-	animals=db.SelectWhereAggreg(Animal{}, hasLongNameOrBeak, &sum, func(id string, a Animal) { sum+=a.Legs })
+	sum := 0
+	animals = db.SelectWhereAggreg(Animal{}, hasLongNameOrBeak, &sum, func(id string, a Animal) { sum += a.Legs })
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
-	// sum==11
+	// sum == 11
 	fmt.Printf("%v, have a total of %v Legs.\n", animals, sum)
 
 	/*
-		Making multiple aggregations, example: SELECT ... COUNT(*) AS x0, SUM(Legs) AS x1
+		Making multiple aggregations, example: SELECT ... COUNT(*) AS x0, SUM(Legs) AS x1 WHERE...
 	*/
-	x:=[]int{0, 0}
-	animals=db.SelectWhereAggreg(Animal{}, hasLongNameOrBeak, &x, func(id string, a Animal) { x[0]+=1; x[1]+=a.Legs })
+	x := []int{0, 0}
+	animals = db.SelectWhereAggreg(Animal{}, hasLongNameOrBeak, &x, func(id string, a Animal) { x[0] += 1; x[1] += a.Legs })
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
-	// sum==11
+	// sum == 11
 	fmt.Printf("%v, COUNT: %v; SUM(Legs): %v.\n", animals, x[0], x[1])
 	// map[ant:{...} chicken:{...} dog:{...}], COUNT: 3; SUM(Legs): 11.
 
-	legs:=0
-	quantity:=db.CountWhereAggreg(Animal{}, hasLongNameOrBeak, &legs, func(id string, a Animal) { legs+=a.Legs })
+	x = []int{0, 0}
+	animals = db.SelectAggreg(Animal{}, &x, func(id string, a Animal) { x[0] += 1; x[1] += a.Legs })
+	fmt.Printf("AGGREG *************************-> %v\n", animals)
+	// map[ant:{Woody 5 true} cat:{Watson 3 false} chicken:{Clotilde 2 true} dinosaur:{Barney 2 false} dog:{Wallander, Mortimer 4 false}]
+	fmt.Printf("%v, COUNT: %v; SUM(Legs): %v.\n", animals, x[0], x[1])
+	// map[ant:{...} chicken:{...} dog:{...}], COUNT: 3; SUM(Legs): 11.
+
+	legs := 0
+	quantity := db.CountWhereAggreg(Animal{}, hasLongNameOrBeak, &legs, func(id string, a Animal) { legs += a.Legs })
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
-	// quantity==3 and legs==11
+	// quantity == 3 and legs == 11
 	fmt.Printf("Simpler, COUNT: %v; SUM(Legs): %v.\n", quantity, legs)
 
-	legs=0
-	quantity=db.CountAggreg(Animal{}, &legs, func(id string, a Animal) { legs+=a.Legs })
+	legs = 0
+	quantity = db.CountAggreg(Animal{}, &legs, func(id string, a Animal) { legs += a.Legs })
 	// map[ant:{Woody 5 true} cat:{Watson 3 false} chicken:{Clotilde 2 true} dinosaur:{Barney 2 false} dog:{Wallander, Mortimer 4 false}]
-	// quantity==5 and legs==16
+	// quantity == 5 and legs == 16
 	fmt.Printf("Even simpler, COUNT: %v; SUM(Legs): %v.\n", quantity, legs)
 
-	quantity=db.CountWhere(Animal{}, hasLongNameOrBeak)
+	quantity = db.CountWhere(Animal{}, hasLongNameOrBeak)
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
-	// quantity==5 and legs==16
+	// quantity == 5 and legs == 16
 	fmt.Printf("COUNT WHERE: %v.\n", quantity)
 
-	quantity=db.Count(Animal{})
+	quantity = db.Count(Animal{})
 	// map[ant:{Woody 5 true} cat:{Watson 3 false} chicken:{Clotilde 2 true} dinosaur:{Barney 2 false} dog:{Wallander, Mortimer 4 false}]
-	// quantity==5
+	// quantity == 5
 	fmt.Printf("Bare COUNT: %v.\n", quantity)
 
 	// SUM example
-	quantLegs:=db.Sum(Animal{}, "Legs")
+	quantLegs := db.Sum(Animal{}, "Legs")
 	fmt.Printf("SUM: %v.\n", quantLegs)
 
 	// SUM WHERE example
-	quantLegs=db.SumWhere(Animal{}, "Legs", hasLongNameOrBeak)
+	quantLegs = db.SumWhere(Animal{}, "Legs", hasLongNameOrBeak)
 	fmt.Printf("SUM WHERE: %v.\n", quantLegs)
 
 	// db.Delete function
@@ -245,7 +264,7 @@ func main() {
 	db.Delete("q9823", Person{})
 	db.Delete("r8791", Person{})
 
-	remaining:=db.SelectAll(Person{})
+	remaining := db.SelectAll(Person{})
 	fmt.Println("Remaining after delete:", remaining)
 }
 ```
