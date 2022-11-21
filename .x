@@ -3,7 +3,7 @@ touch .edit; MISSING=$(find . -type f -name \*.go|grep -v -f .edit); [ -z "${MIS
 execute(){
 	rm -f golib
 	go mod tidy
-	BDEBUG=1 go test -v
+	BDEBUG=1 go test -v -covermode=count -coverprofile=profile.cov
 }
 updatelibs(){
 	go get -u github.com/rodolfoap/gx@$(cat ~/git/gx/VERSION)

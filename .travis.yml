@@ -1,3 +1,20 @@
 language: go
-
-script: go test -v
+go:
+  - "1.18"
+  - "1.19"
+  - stable
+  - master
+arch:
+  - amd64
+before_install:
+  - go get github.com/rodolfoap/gx
+script:
+  - go test -v -covermode=count -coverprofile=profile.cov
+after_success:
+  - $GOPATH/bin/goveralls -coverprofile=profile.cov -service=circle-ci
+notifications:
+  email:
+    recipients:
+      - rodolfoap@live.com
+    on_success: change
+    on_failure: always
