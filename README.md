@@ -7,11 +7,53 @@
 
 A minimalist file-based JSON documents database with the capability of complex SELECT WHERE operations and multiple aggregations over a single table.
 
-* Tables are subdirectories, e.g. `/tmp/clients/`;
-* Registries are files, e.g. `/tmp/clients/a929782.json` that map to golang _structs_.
-* Filenames are registry IDs, e.g. `/tmp/clients/a929782.json` has `ID==a929782`;
+* Tables are subdirectories, e.g. `/tmp/client/`;
+* Registries are files, e.g. `/tmp/client/a929782.json` that map to golang _structs_.
+* Filenames are registry IDs, e.g. `/tmp/client/a929782.json` has `ID==a929782`;
+* SQL queries can include WHERE clauses (e.g. `SelectWhere()`), aggregations (`SelectAggreg()`, to perform SUM(), COUNT(), AVG(), advanced filters or far any complex result) or both (`SelectWhereAggreg()`).
 
-`SQL SELECT` equivalents are:
+## Install
+
+```
+go get github.com/rodolfoap/jdocdb
+```
+
+## JDocDB HelloWorld
+
+```
+package main
+import("fmt"; db "github.com/rodolfoap/jdocdb";)
+
+type Client struct {
+        Name   string
+        Age    int
+        Active bool
+}
+
+func main() {
+        // Insert
+        c:=Client{"Hello, World!", 44, true}
+        db.Insert("a929782", c, "/tmp")
+        /*
+        cat /tmp/client/a929782.json
+        {
+                "Id": "a929782",
+                "Data": {
+                        "Name": "Hello, World!",
+                        "Age": 44,
+                        "Active": true
+                }
+        }
+        */
+
+        // Select
+        result1:=db.Select("a929782", Client{}, "/tmp")
+        fmt.Printf("%#v\n", result1) // main.Client{Name:"Hello, World!", Age:44, Active:true}
+}
+```
+## Equivalencies with SQL
+
+JDocDB has far stronger query potentials in addition to SELECT by ID. `SQL SELECT` equivalents are:
 
 * `SELECT * FROM mytype;`: SelectAll(MyType{}, tableLocation), producing a **map[id]_struct_** (a map of _MyType_ structs, where the index is the register ID)
 * `SELECT ID FROM mytype;`: `SelectIds(MyType{}, tableLocation)`, producing a slice of string IDs.
@@ -28,12 +70,6 @@ A minimalist file-based JSON documents database with the capability of complex S
 * `SELECT COUNT(*), some_aggregate_function(...) FROM mytype WHERE conditions...;`: `db.CountWhereAggreg(MyType{}, conditionsFunction, tableLocation)`, yielding an **int**, see `SelectWhereAggreg()`.
 * `DELETE FROM mytype WHERE ID=id;`: `db.Delete(MyType{}, tableLocation)`, simple deletion. There is no table delete, just remove the directory where the registers are.
 * `INSERT INTO mytype VALUES ...;`: `db.Insert(MyType{}, tableLocation)`, simple _upsert_ function.
-
-## Installing
-
-```
-go get github.com/rodolfoap/jdocdb
-```
 
 ## Example usage
 
