@@ -29,6 +29,12 @@ A minimalist file-based JSON documents database with the capability of complex S
 * `DELETE FROM mytype WHERE ID=id;`: `db.Delete(MyType{}, tableLocation)`, simple deletion. There is no table delete, just remove the directory where the registers are.
 * `INSERT INTO mytype VALUES ...;`: `db.Insert(MyType{}, tableLocation)`, simple _upsert_ function.
 
+## Installing
+
+```
+go get github.com/rodolfoap/jdocdb
+```
+
 ## Example usage
 
 ```
