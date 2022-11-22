@@ -2,6 +2,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/rodolfoap/jdocdb.svg)](https://pkg.go.dev/github.com/rodolfoap/jdocdb)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rodolfoap/jdocdb)](https://goreportcard.com/report/github.com/rodolfoap/jdocdb)
 [![Coverage Status](https://coveralls.io/repos/github/rodolfoap/jdocdb/badge.svg?branch=main)](https://coveralls.io/github/rodolfoap/jdocdb?branch=main)
+[![Build Status](https://app.travis-ci.com/rodolfoap/jdocdb.svg?branch=main)](https://app.travis-ci.com/rodolfoap/jdocdb)
 [![GitHub go.mod Go version of a Go module](https://img.shields.io/github/go-mod/go-version/gomods/athens.svg)](https://github.com/gomods/athens)
 [![GPLv3 license](https://img.shields.io/badge/License-GPLv3-blue.svg)](http://perso.crans.org/besson/LICENSE.html)
 
