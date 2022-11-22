@@ -8,12 +8,13 @@ git:
   depth: 1
 before_install:
   - go get github.com/rodolfoap/gx
-before_script:
-  - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.37.1
+# Buggy!
+#before_script:
+#  - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.37.1
 script:
   # https://github.com/golangci/golangci-lint/pull/620/files
-  - go mod download
-  - golangci-lint run
+  #- go mod download
+  #- golangci-lint run
   - go test -v -covermode=count -coverprofile=profile.cov
 after_success:
   - $GOPATH/bin/goveralls -coverprofile=profile.cov -service=circle-ci
