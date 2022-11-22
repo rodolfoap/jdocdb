@@ -44,6 +44,7 @@ func Insert[T interface{}](id string, doc T, prefix ...string) {
 func Select[T interface{}](id string, doc T, prefix ...string) T {
 	defer mutex.Unlock()
 	mutex.Lock()
+
 	reg := Register{Id: id, Data: &doc}
 	table := buildPath(getType(doc), prefix...)
 	jsonPath := filepath.Join(table, id+".json")
@@ -64,6 +65,7 @@ func Select[T interface{}](id string, doc T, prefix ...string) T {
 func SelectIds[T interface{}](doc T, prefix ...string) []string {
 	defer mutex.Unlock()
 	mutex.Lock()
+
 	idList := []string{}
 	table := buildPath(getType(doc), prefix...)
 	fileList, err := os.ReadDir(table)
@@ -89,44 +91,8 @@ func SelectAll[T interface{}](doc T, prefix ...string) map[string]T {
 	return docs
 }
 
-// SelectWhere()
-//
-// Syntax: `SelectWhere(EMPTY_STRUCT, func(T Table) bool [, PREFIX [, SUFFIX] ])`, where:
-//
-// * `func(T Table) bool` is a passing function performing the actual WHERE assessment to every row.
-//
-// Returns: `map[string]T`: A map of key/values, key being the ID, and value a _struct_ of the same type T provided as input.
-//
-// SELECT * FROM Person WHERE AGE == 55
-//
-// filtered := db.SelectWhere(Person{}, func(p Person) bool { return p.Age == 55 })
-//
-// map[n9878:{Junge 55 true} r8791:{Jonna 55 false}]
-// fmt.Println("Having 55:", filtered)
-//
-// SELECT * FROM Person WHERE NOT Sex
-//
-// filtered = db.SelectWhere(Person{}, func(p Person) bool { return !p.Sex })
-//
-// map[p0926:{James 33 false} r8791:{Jonna 55 false}]
-// fmt.Println("Have not Sex:", filtered)
-//
-// SELECT * FROM Person WHERE Sex AND AGE == 55
-//
-// filtered = db.SelectWhere(Person{}, func(p Person) bool { return p.Sex && p.Age == 55 })
-//
-// map[n9878:{Junge 55 true}]
-// fmt.Println("Have Sex and 55:", filtered)
-//
-// An alternative way of Golang for defining functions:
-// hasLongNameOrBeak := func(a Animal) bool { return len(a.Name) > 6 || a.Beak }
-//
-// SELECT * FROM Animal WHERE LEN(name)>6 OR Beak
-//
-// animals := db.SelectWhere(Animal{}, hasLongNameOrBeak)
-//
-// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
-// fmt.Println("Has Long Name Or Beak:", animals)
+// Selects all rows that meet some conditions, prefix is a set of dir/subdirectories.
+// This applies the condition over each unmarshaled struct, providing the matching result in a map.
 func SelectWhere[T interface{}](doc T, cond func(T) bool, prefix ...string) map[string]T {
 	docs := map[string]T{}
 	for key, val := range SelectAll(doc, prefix...) {
@@ -147,13 +113,6 @@ func SelectIdWhere[T interface{}](doc T, cond func(T) bool, prefix ...string) []
 }
 
 // Selects all rows that meet some conditions, prefix is a set of dir/subdirectories.
-// Parameters:
-//
-//	doc T: Any user-defined type struct, for example, {Person}
-//	cond func(): A user-defined type taking the previous struct and yielding a boolean. Every entry is compared to consider is it is returned.
-//	aggregator *A: A pointer reference to a user variable, which is available during the internal processing loop, to calculate aggregates. Could be a slice or a struct.
-//	aggregate func(): A user-defined function that fills up the aggregator variable(s).
-//	prefix...: Only used to read the prefix (table location, or ./) and the suffix (table directory or lowecase(type)).
 func SelectWhereAggreg[T interface{}, A interface{}](doc T, cond func(T) bool, aggregator *A, aggregate func(string, T), prefix ...string) map[string]T {
 	_docs := SelectWhere(doc, cond, prefix...)
 	for _key, _val := range _docs {
@@ -237,6 +196,7 @@ func SumWhere[T interface{}](doc T, fieldName string, cond func(T) bool, prefix 
 func Delete[T interface{}](id string, doc T, prefix ...string) {
 	defer mutex.Unlock()
 	mutex.Lock()
+
 	table := buildPath(getType(doc), prefix...)
 	jsonPath := filepath.Join(table, id+".json")
 	err := os.Remove(jsonPath)

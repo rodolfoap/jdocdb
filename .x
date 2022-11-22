@@ -36,5 +36,6 @@ e) 	vi -p $(grep -v '^#' .edit) .edit
 u)	updatelibs;;
 c)	gocoverage;;
 cc)	~/bin/go.coverage;;
+d)	godoc -http=:6060;;
 "")	execute;;
 esac
