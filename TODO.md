@@ -1,6 +1,6 @@
 # TODO
 
-* [ ] Needs to be thread-safe
+* [x] Needs to be thread-safe
 * [ ] Needs better error handling
 * [ ] Associate common aggregators (SUM, AVG, MAX, MIN, etc.) with a math library like https://pkg.go.dev/github.com/OGFris/GoStats
 * [x] Needs some logging

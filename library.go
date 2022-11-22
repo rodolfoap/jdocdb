@@ -7,9 +7,12 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/rodolfoap/gx"
 )
+
+var mutex sync.Mutex
 
 // Structure used for unmarshaling each register. The Id value is generated and
 // kept while recording, because it duplicates the file name.
@@ -20,6 +23,9 @@ type Register struct {
 
 // Inserts one registry into a table using its ID, prefix is a set of dir/subdirectories
 func Insert[T interface{}](id string, doc T, prefix ...string) {
+	defer mutex.Unlock()
+	mutex.Lock()
+
 	reg := Register{Id: id, Data: doc}
 	table := buildPath(getType(doc), prefix...)
 	err := os.MkdirAll(table, 0755)
@@ -36,6 +42,8 @@ func Insert[T interface{}](id string, doc T, prefix ...string) {
 // Selects one registry from a table using its ID, prefix is a set of dir/subdirectories.
 // This just reads a single file, unmarshals it and returns a (generic) structure.
 func Select[T interface{}](id string, doc T, prefix ...string) T {
+	defer mutex.Unlock()
+	mutex.Lock()
 	reg := Register{Id: id, Data: &doc}
 	table := buildPath(getType(doc), prefix...)
 	jsonPath := filepath.Join(table, id+".json")
@@ -54,6 +62,8 @@ func Select[T interface{}](id string, doc T, prefix ...string) T {
 // Internally, just finding, not unmarshaling, .json files in a directory,
 // since IDs are just filename prefixes.
 func SelectIds[T interface{}](doc T, prefix ...string) []string {
+	defer mutex.Unlock()
+	mutex.Lock()
 	idList := []string{}
 	table := buildPath(getType(doc), prefix...)
 	fileList, err := os.ReadDir(table)
@@ -79,8 +89,44 @@ func SelectAll[T interface{}](doc T, prefix ...string) map[string]T {
 	return docs
 }
 
-// Selects all rows that meet some conditions, prefix is a set of dir/subdirectories.
-// This applies the condition over each unmarshaled struct, providing the matching result in a map.
+// SelectWhere()
+//
+// Syntax: `SelectWhere(EMPTY_STRUCT, func(T Table) bool [, PREFIX [, SUFFIX] ])`, where:
+//
+// * `func(T Table) bool` is a passing function performing the actual WHERE assessment to every row.
+//
+// Returns: `map[string]T`: A map of key/values, key being the ID, and value a _struct_ of the same type T provided as input.
+//
+// SELECT * FROM Person WHERE AGE == 55
+//
+// filtered := db.SelectWhere(Person{}, func(p Person) bool { return p.Age == 55 })
+//
+// map[n9878:{Junge 55 true} r8791:{Jonna 55 false}]
+// fmt.Println("Having 55:", filtered)
+//
+// SELECT * FROM Person WHERE NOT Sex
+//
+// filtered = db.SelectWhere(Person{}, func(p Person) bool { return !p.Sex })
+//
+// map[p0926:{James 33 false} r8791:{Jonna 55 false}]
+// fmt.Println("Have not Sex:", filtered)
+//
+// SELECT * FROM Person WHERE Sex AND AGE == 55
+//
+// filtered = db.SelectWhere(Person{}, func(p Person) bool { return p.Sex && p.Age == 55 })
+//
+// map[n9878:{Junge 55 true}]
+// fmt.Println("Have Sex and 55:", filtered)
+//
+// An alternative way of Golang for defining functions:
+// hasLongNameOrBeak := func(a Animal) bool { return len(a.Name) > 6 || a.Beak }
+//
+// SELECT * FROM Animal WHERE LEN(name)>6 OR Beak
+//
+// animals := db.SelectWhere(Animal{}, hasLongNameOrBeak)
+//
+// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
+// fmt.Println("Has Long Name Or Beak:", animals)
 func SelectWhere[T interface{}](doc T, cond func(T) bool, prefix ...string) map[string]T {
 	docs := map[string]T{}
 	for key, val := range SelectAll(doc, prefix...) {
@@ -189,6 +235,8 @@ func SumWhere[T interface{}](doc T, fieldName string, cond func(T) bool, prefix 
 
 // Deletes one registry from a table using its ID, prefix is a set of dir/subdirectories
 func Delete[T interface{}](id string, doc T, prefix ...string) {
+	defer mutex.Unlock()
+	mutex.Lock()
 	table := buildPath(getType(doc), prefix...)
 	jsonPath := filepath.Join(table, id+".json")
 	err := os.Remove(jsonPath)
