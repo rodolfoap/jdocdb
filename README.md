@@ -12,6 +12,9 @@ A minimalist file-based JSON documents database with the capability of complex S
 * Registries are files, e.g. `/tmp/client/a929782.json` that map to golang _structs_.
 * Filenames are registry IDs, e.g. `/tmp/client/a929782.json` has `ID==a929782`;
 * SQL queries can include WHERE clauses (e.g. `SelectWhere()`), aggregations (`SelectAggreg()`, to perform SUM(), COUNT(), AVG(), advanced filters or far any complex result) or both (`SelectWhereAggreg()`).
+* No backend server is required.
+* Since the database is just a set of files organized in directories, it is easy to backup (**tar**, **zip**...), replicate (**rsync**...), versionate (**git**...), etc... Hell, registers can be modified with **vim** or browsed using **cat** and **grep**! If you are a power user, you know [**jq**](https://stedolan.github.io/jq/).
+* JSON makes **data compatible with any other JSON-capable system**. Migration, export and import from other systems becomes trivial. Not even SQLite allows that.
 
 ## Install
 
@@ -35,8 +38,16 @@ func main() {
         // Insert
         c:=Client{"Hello, World!", 44, true}
         db.Insert("a929782", c, "/tmp")
-        /*
-        cat /tmp/client/a929782.json
+
+        // Select
+        result1:=db.Select("a929782", Client{}, "/tmp")
+        fmt.Printf("%#v\n", result1) // main.Client{Name:"Hello, World!", Age:44, Active:true}
+}
+```
+
+Notice that the `Insert()` command creates a simple JSON file:
+```
+$ cat /tmp/client/a929782.json
         {
                 "Id": "a929782",
                 "Data": {
@@ -45,32 +56,7 @@ func main() {
                         "Active": true
                 }
         }
-        */
-
-        // Select
-        result1:=db.Select("a929782", Client{}, "/tmp")
-        fmt.Printf("%#v\n", result1) // main.Client{Name:"Hello, World!", Age:44, Active:true}
-}
 ```
-## Equivalencies with SQL
-
-JDocDB has far stronger query potentials in addition to SELECT by ID. `SQL SELECT` equivalents are:
-
-* `SELECT * FROM mytype;`: SelectAll(MyType{}, tableLocation), producing a **map[id]_struct_** (a map of _MyType_ structs, where the index is the register ID)
-* `SELECT ID FROM mytype;`: `SelectIds(MyType{}, tableLocation)`, producing a slice of string IDs.
-* `SELECT * FROM mytype WHERE ID=id;`: `Select(id, MyType{}, tableLocation)`, producing a single _struct_, the ID is necessarily unique.
-* `SELECT * FROM mytype WHERE conditions...;`: `SelectWhere(MyType{}, conditionsFunction, tableLocation)`, producing a map[id]_struct_ (a map of _MyType_ structs, where the index is the table ID), according to a function, which can be a closure, a nested or a common function.
-* `SELECT some_aggregate_function(...) FROM mytype;"`: `SelectAggreg(MyType, &aggregationVariable, aggregationFunction, tableLocation)`, producing a map[id]_struct_ (a map of _MyType_ structs, where the index is the table ID), according to a function, which can be a closure, a nested or a common function.
-* `SELECT some_aggregate_function(...) FROM mytype WHERE conditions ...;"`: `SelectWhereAggreg(MyType, function, &aggregationVariable, aggregationFunction, tableLocation)`, producing a map[id]_struct_ (a map of _MyType_ structs, where the index is the table ID), according to a function, which can be a closure, a nested or a common function.
-* `SELECT ID FROM mytype WHERE conditions...;`: `SelectIdWhere(MyType{}, conditionsFunction, tableLocation)`, producing a slice of string IDs, according to a function, which can be a closure, a nested or a common function.
-* `SELECT SUM(myfield) FROM mytype;`: `Sum(MyType{}, "myfield", tableLocation)`, producing a slice of string IDs, using a string to locate the field to sum (evidently, a single sum). This function can be easily implemented with `SelectAggreg()` or `SelectWhereAggreg()` and it is provided just for simplicity.
-* `SELECT SUM(myfield) FROM mytype WHERE conditions...;`: `SumWhere(MyType{}, conditionsFunction, tableLocation)`, producing a slice of string IDs, according to a function, which can be a closure, a nested or a common function. Notice there's no `SumWhereAggreg()` function, since SUM is already an aggregation.
-* `SELECT COUNT(*) FROM mytype;`: `db.Count(MyType{}, tableLocation)`, yielding an **int**. Provided for simplicity.
-* `SELECT COUNT(*) FROM mytype WHERE conditions...;`: `db.CountWhere(MyType{}, conditionsFunction, tableLocation)`, yielding an **int**, see `SelectWhere()`.
-* `SELECT COUNT(*), some_aggregate_function(...) FROM mytype;`: `db.CountAggreg(MyType{}, &aggregationVariable, aggregationFunction, tableLocation)`, yielding an **int**, see `SelectAggreg()`. If only aggregation results are required, use `db.CountAggreg()` instead of `SelectAggreg()`.
-* `SELECT COUNT(*), some_aggregate_function(...) FROM mytype WHERE conditions...;`: `db.CountWhereAggreg(MyType{}, conditionsFunction, tableLocation)`, yielding an **int**, see `SelectWhereAggreg()`.
-* `DELETE FROM mytype WHERE ID=id;`: `db.Delete(MyType{}, tableLocation)`, simple deletion. There is no table delete, just remove the directory where the registers are.
-* `INSERT INTO mytype VALUES ...;`: `db.Insert(MyType{}, tableLocation)`, simple _upsert_ function.
 
 ## Usage
 ```
@@ -111,12 +97,18 @@ func main() {
 
 ### Location parameters
 
-All commands have the form `CommandX(PARAMETER_1, PARAMETER_2, ..., PARAMETER_N [, PREFIX [, SUFFIX ] ]), where all **PARAMETER_x** are command-specific, and PREFIX/SUFFIX determine where will the table will be stored.
+All commands have the form...
+
+```
+CommandX(PARAMETER_1, PARAMETER_2, ..., PARAMETER_N [, PREFIX [, SUFFIX ] ])
+```
+
+... where all **PARAMETER_x** are command-specific, and **PREFIX/SUFFIX** determine where will the table will be stored.
 
 For example: `db.SelectIds(Person{}, "prefix", "suffix")`. The rules are:
 
 1. If NO PREFIX is specified, the path will be `./person/`
-2. If PREFIX=/var/data, the path will be `/var/data/person/`
+2. If PREFIX=/var/data, the path will be `/var/data/person/`. Normally, you will just use a PREFIX, so, your typical command would be `db.SelectIds(Person{}, "/somewhere")`.
 3. If SUFFIX=people is defined in addition, the path will be `/var/data/people/`
 
 For example, `db.Insert("jill001", Person{"Jill", 11, false}, "/var/data", "people")` will produce `/var/data/people/jill001.json`.
@@ -509,3 +501,24 @@ Example:
 	remaining := db.SelectAll(Person{})
 	fmt.Println("Remaining after delete:", remaining)
 ```
+
+## Equivalencies with SQL
+
+JDocDB has far stronger query potentials in addition to SELECT by ID. `SQL SELECT` equivalents are:
+
+* `SELECT * FROM mytype;`: SelectAll(MyType{}, tableLocation), producing a **map[id]_struct_** (a map of _MyType_ structs, where the index is the register ID)
+* `SELECT ID FROM mytype;`: `SelectIds(MyType{}, tableLocation)`, producing a slice of string IDs.
+* `SELECT * FROM mytype WHERE ID=id;`: `Select(id, MyType{}, tableLocation)`, producing a single _struct_, the ID is necessarily unique.
+* `SELECT * FROM mytype WHERE conditions...;`: `SelectWhere(MyType{}, conditionsFunction, tableLocation)`, producing a map[id]_struct_ (a map of _MyType_ structs, where the index is the table ID), according to a function, which can be a closure, a nested or a common function.
+* `SELECT some_aggregate_function(...) FROM mytype;"`: `SelectAggreg(MyType, &aggregationVariable, aggregationFunction, tableLocation)`, producing a map[id]_struct_ (a map of _MyType_ structs, where the index is the table ID), according to a function, which can be a closure, a nested or a common function.
+* `SELECT some_aggregate_function(...) FROM mytype WHERE conditions ...;"`: `SelectWhereAggreg(MyType, function, &aggregationVariable, aggregationFunction, tableLocation)`, producing a map[id]_struct_ (a map of _MyType_ structs, where the index is the table ID), according to a function, which can be a closure, a nested or a common function.
+* `SELECT ID FROM mytype WHERE conditions...;`: `SelectIdWhere(MyType{}, conditionsFunction, tableLocation)`, producing a slice of string IDs, according to a function, which can be a closure, a nested or a common function.
+* `SELECT SUM(myfield) FROM mytype;`: `Sum(MyType{}, "myfield", tableLocation)`, producing a slice of string IDs, using a string to locate the field to sum (evidently, a single sum). This function can be easily implemented with `SelectAggreg()` or `SelectWhereAggreg()` and it is provided just for simplicity.
+* `SELECT SUM(myfield) FROM mytype WHERE conditions...;`: `SumWhere(MyType{}, conditionsFunction, tableLocation)`, producing a slice of string IDs, according to a function, which can be a closure, a nested or a common function. Notice there's no `SumWhereAggreg()` function, since SUM is already an aggregation.
+* `SELECT COUNT(*) FROM mytype;`: `db.Count(MyType{}, tableLocation)`, yielding an **int**. Provided for simplicity.
+* `SELECT COUNT(*) FROM mytype WHERE conditions...;`: `db.CountWhere(MyType{}, conditionsFunction, tableLocation)`, yielding an **int**, see `SelectWhere()`.
+* `SELECT COUNT(*), some_aggregate_function(...) FROM mytype;`: `db.CountAggreg(MyType{}, &aggregationVariable, aggregationFunction, tableLocation)`, yielding an **int**, see `SelectAggreg()`. If only aggregation results are required, use `db.CountAggreg()` instead of `SelectAggreg()`.
+* `SELECT COUNT(*), some_aggregate_function(...) FROM mytype WHERE conditions...;`: `db.CountWhereAggreg(MyType{}, conditionsFunction, tableLocation)`, yielding an **int**, see `SelectWhereAggreg()`.
+* `DELETE FROM mytype WHERE ID=id;`: `db.Delete(MyType{}, tableLocation)`, simple deletion. There is no table delete, just remove the directory where the registers are.
+* `INSERT INTO mytype VALUES ...;`: `db.Insert(MyType{}, tableLocation)`, simple _upsert_ function.
+
