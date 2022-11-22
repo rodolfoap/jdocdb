@@ -72,8 +72,7 @@ JDocDB has far stronger query potentials in addition to SELECT by ID. `SQL SELEC
 * `DELETE FROM mytype WHERE ID=id;`: `db.Delete(MyType{}, tableLocation)`, simple deletion. There is no table delete, just remove the directory where the registers are.
 * `INSERT INTO mytype VALUES ...;`: `db.Insert(MyType{}, tableLocation)`, simple _upsert_ function.
 
-## Example usage
-
+## Usage
 ```
 package main
 import("fmt"; db "github.com/rodolfoap/jdocdb";)
@@ -93,21 +92,6 @@ type Animal struct {
 
 // Now, you can start SQLing...
 func main() {
-	/*
-
-		All functions have some PARAMETERS and then [ PREFIX [, SUFFIX] ],
-
-		For example: db.SelectIds(Person{}, "prefix", "suffix")
-
-		1. If NO PREFIX is specified, the path will be ./person/
-		2. If PREFIX=data, the path will be ./data/person/
-		3. If SUFFIX=people, the path will be ./data/people/
-
-		Example with db.Insert, usage:
-
-		db.Insert(KEY, STRUCT, [ PREFIX [, SUFFIX] ])
-	*/
-
 	db.Insert("p0926", Person{"James", 33, false})
 	/* Will create the file ./people/p0926.json with this content:
 	{
@@ -122,12 +106,21 @@ func main() {
 	db.Insert("dinosaur", Animal{"Barney", 2, false})
 	// Will create ./animal/dinosaur.json
 
-	/*
+	...
+```
 
-		Where is my table?
+### Location parameters
 
-	*/
+All commands have the form `CommandX(PARAMETER_1, PARAMETER_2, ..., PARAMETER_N [, PREFIX [, SUFFIX ] ]), where all **PARAMETER_x** are command-specific, and PREFIX/SUFFIX determine where will the table will be stored.
 
+For example: `db.SelectIds(Person{}, "prefix", "suffix")`. The rules are:
+
+1. If NO PREFIX is specified, the path will be `./person/`
+2. If PREFIX=/var/data, the path will be `/var/data/person/`
+3. If SUFFIX=people is defined in addition, the path will be `/var/data/people/`
+
+For example, `db.Insert("jill001", Person{"Jill", 11, false}, "/var/data", "people")` will produce `/var/data/people/jill001.json`.
+```
 	// This creates /tmp/person/z0215.json (default suffix is the table name)
 	// This is the recommended way to perform queries: just the database location (prefix).
 	db.Insert("z0215", Person{"Junge", 19, true}, "/tmp")
@@ -167,41 +160,73 @@ func main() {
 	    ├── q9823.json
 	    ├── r8791.json
 	    └── n9878.json
-
-	1. If NO PREFIX is specified, the path will be ./person/
-	2. If PREFIX=data, the path will be ./data/person/
-	3. If SUFFIX=people, the path will be ./data/people/
 	*/
+```
 
-	/* Usage: db.Select(KEY, EMPTY_STRUCT, [ PREFIX [, SUFFIX] ]) */
+### Select()
+
+SQL SELECT has multiple forms in JDocDB: `Select()` allows selecting by ID and producing a set of _struct_.
+
+Syntax: `Select(KEY, EMPTY_STRUCT [, PREFIX [, SUFFIX] ])`
+
+Returns: `T`: A single _struct_ of the same type T provided as input.
+
+Example:
+```
 	jonas := db.Select("q9823", Person{})
 
 	// {Jonas 44 true}, jdocdb.Person, 44
 	fmt.Printf("%v, %T, %v\n", jonas, jonas, jonas.Age)
 
+	jojo := db.Select("a7654", Person{})
+
+	// Empty SELECT: file does not exist, and a log/debug message is produced
+	fmt.Printf("This is just empty: %v\n", jojo)
+```
+
+### SelectIds()
+
+Syntax: `SelectIds(EMPTY_STRUCT [, PREFIX [, SUFFIX] ])`
+
+Returns: `[]string`: A slice with a set of IDs.
+
+Example:
+```
 	/* Usage: db.SelectIds(EMPTY_STRUCT, [ PREFIX [, SUFFIX] ]) */
 	listIds := db.SelectIds(Person{})
 	// [n9878 p0926 q9823 r8791]
 	fmt.Println(listIds)
+```
 
+### SelectAll()
+
+Syntax: `SelectAll(EMPTY_STRUCT [, PREFIX [, SUFFIX] ])`
+
+Returns: `map[string]T`: A map of key/values, key being the ID, and value a _struct_ of the same type T provided as input.
+
+Example:
+```
 	/* Usage: db.SelectAll(EMPTY_STRUCT, [ PREFIX [, SUFFIX] ]) */
 	m := db.SelectAll(Person{})
 	// map[n9878:{Junge 55 true} p0926:{James 33 false} q9823:{Jonas 44 true} r8791:{Jonna 33 false}]
 	fmt.Println(m)
 
-	// Empty SELECT: file does not exist, and a log/debug message is produced
-	jojo := db.Select("a7654", Person{})
-	fmt.Printf("This is just empty: %v\n", jojo)
+```
 
-	/* COMPLEX QUERIES
+## Complex Queries
 
-	SELECT * FROM [TABLE] WHERE [CONDITIONS...]; are possible using Golang func types
-	that are passed as arguments. See the following examples with db.SelectWhere:
+`SELECT * FROM [TABLE] WHERE [CONDITIONS...];` are possible using Golang func types that are passed as arguments.
 
-	db.SelectWhere(EMPTY_STRUCT, func(p Table) bool, [ PREFIX [, SUFFIX] ])
+### SelectWhere()
 
-	*/
+Syntax: `SelectWhere(EMPTY_STRUCT, func(T Table) bool [, PREFIX [, SUFFIX] ])`, where:
 
+* `func(T Table) bool` is a passing function performing the actual WHERE assessment to every row.
+
+Returns: `map[string]T`: A map of key/values, key being the ID, and value a _struct_ of the same type T provided as input.
+
+Example:
+```
 	//
 	// SELECT * FROM Person WHERE AGE == 55
 	//
@@ -252,7 +277,16 @@ func main() {
 
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
 	fmt.Println("Has Long Name Or Beak:", animals)
+```
 
+### SelectIdWhere()
+
+Syntax: `SelectIdWhere(EMPTY_STRUCT, func(T Table)bool [, PREFIX [, SUFFIX] ])`, see _SelectWhere()_
+
+Returns: `[]string`: A slice with a set of IDs.
+
+Example:
+```
 	//
 	// SELECT ID FROM Animal WHERE LEN(name)>6 OR Beak
 	//
@@ -260,15 +294,53 @@ func main() {
 
 	// [chicken dog ant]
 	fmt.Println("IDs for Has Long Name Or Beak:", animalIDs)
+```
 
-	/* QUERIES performing AGGREGATION
+## Aggregation
 
-	SQL aggregation functions like SUM(), AVG() or COUNT() are possible in JDocDB in the
-	same way that WHERE functions are possible: by passing anonymous or common functions as
-	arguments.
+SQL aggregation functions like SUM(), AVG() or COUNT() are possible in JDocDB in the same way that WHERE functions are possible: by passing anonymous or common functions as arguments.
 
-	*/
+### SelectAggreg()
 
+Syntax: `SelectAggreg(EMPTY_STRUCT, &AGGREGATOR, func(key string, value string) [, PREFIX [, SUFFIX] ])`, where:
+
+* `&AGGREGATOR` is a pointer to a variable that is available during the aggregation loop, and
+* `func(key string, value string)` is a passing function performing the actual aggregation.
+
+Returns:
+
+* `map[string]T`: A map of key/values, key being the ID, and value a _struct_ of the same type T provided as input.
+* In addition, the `&AGGREGATOR` provides the actual aggregation values.
+
+Example:
+```
+	//
+	// SELECT ... COUNT(*) AS x0, SUM(Legs) AS x1 FROM Animal;
+	//
+	x = []int{0, 0}
+	animals = db.SelectAggreg(Animal{}, &x, func(id string, a Animal) { x[0] += 1; x[1] += a.Legs })
+
+	// map[ant:{Woody 5 true} cat:{Watson 3 false} chicken:{Clotilde 2 true} dinosaur:{Barney 2 false} dog:{Wallander, Mortimer 4 false}]
+	// map[ant:{...} chicken:{...} dog:{...}], COUNT: 3; SUM(Legs): 11.
+	fmt.Printf("%v, COUNT: %v; SUM(Legs): %v.\n", animals, x[0], x[1])
+```
+
+### SelectWhereAggreg()
+
+Syntax: `SelectWhereAggreg(EMPTY_STRUCT, func(T Table) bool, &AGGREGATOR, func(key string, value string) [, PREFIX [, SUFFIX] ])`, where:
+
+* `func(T Table) bool` is a passing function performing the actual WHERE assessment to every row;
+* `&AGGREGATOR` is a pointer to a variable that is available during the aggregation loop, and
+* `func(key string, value string)` is a passing function performing the actual aggregation.
+
+Returns:
+
+* `map[string]T`: A map of key/values, key being the ID, and value a _struct_ of the same type T provided as input;
+* In addition, the `&AGGREGATOR` provides the actual aggregation values.
+
+Example:
+```
+	// A single aggregation
 	//
 	// SELECT ... SUM(*) AS sum FROM Animal WHERE LEN(name)>6 OR Beak;
 	//
@@ -289,33 +361,42 @@ func main() {
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
 	// map[ant:{...} chicken:{...} dog:{...}], COUNT: 3; SUM(Legs): 11.
 	fmt.Printf("%v, COUNT: %v; SUM(Legs): %v.\n", animals, x[0], x[1])
+```
 
-	// Multiple aggregations without WHERE, use db.SelectAggreg()
-	//
-	// SELECT ... COUNT(*) AS x0, SUM(Legs) AS x1 FROM Animal;
-	//
-	x = []int{0, 0}
-	animals = db.SelectAggreg(Animal{}, &x, func(id string, a Animal) { x[0] += 1; x[1] += a.Legs })
+### Count()
 
+Syntax: `Count(EMPTY_STRUCT [, PREFIX [, SUFFIX] ])`
+
+Returns: An `int` with the counting result.
+
+Example:
+```
+	//
+	// SELECT ... COUNT(*) FROM Animal;
+	//
+	quantity = db.Count(Animal{})
 	// map[ant:{Woody 5 true} cat:{Watson 3 false} chicken:{Clotilde 2 true} dinosaur:{Barney 2 false} dog:{Wallander, Mortimer 4 false}]
-	// map[ant:{...} chicken:{...} dog:{...}], COUNT: 3; SUM(Legs): 11.
-	fmt.Printf("%v, COUNT: %v; SUM(Legs): %v.\n", animals, x[0], x[1])
+	// quantity == 5
+	fmt.Printf("Bare COUNT: %v.\n", quantity)
+```
 
-	/* A simpler approach to aggregation: db.Count()
+### CountAggreg()
 
-	If you need just aggregations, don't get the whole set, just get the count and
-	get your aggregation result using db.Count().
-	*/
+Syntax: `CountAggreg(EMPTY_STRUCT, &AGGREGATOR, func(key string, value string) [, PREFIX [, SUFFIX] ])`, where:
 
-	//
-	// SELECT ... COUNT(*) AS legs FROM Animal WHERE LEN(name)>6 OR Beak;
-	//
-	legs := 0
-	quantity := db.CountWhereAggreg(Animal{}, hasLongNameOrBeak, &legs, func(id string, a Animal) { legs += a.Legs })
+* `&AGGREGATOR` is a pointer to a variable that is available during the aggregation loop, and
+* `func(key string, value string)` is a passing function performing the actual aggregation.
 
-	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
-	// quantity == 3 and legs == 11
-	fmt.Printf("Simpler, COUNT: %v; SUM(Legs): %v.\n", quantity, legs)
+Returns:
+
+* An `int` with the counting result;
+* In addition, the `&AGGREGATOR` provides the actual aggregation values.
+
+`CountAggreg()` is the simplest way of performing aggregations. If the result set is not important, just aggregations, go for `CountAggreg()`.
+
+Example:
+```
+
 
 	// Simpler, without the WHERE clause:
 	//
@@ -326,7 +407,44 @@ func main() {
 	// map[ant:{Woody 5 true} cat:{Watson 3 false} chicken:{Clotilde 2 true} dinosaur:{Barney 2 false} dog:{Wallander, Mortimer 4 false}]
 	// quantity == 5 and legs == 16
 	fmt.Printf("Even simpler, COUNT: %v; SUM(Legs): %v.\n", quantity, legs)
+```
 
+### CountWhereAggreg()
+
+Syntax: `CountWhereAggreg(EMPTY_STRUCT, func(T Table) bool, &AGGREGATOR, func(key string, value string) [, PREFIX [, SUFFIX] ])`, where:
+
+* `func(T Table) bool` is a passing function performing the actual WHERE assessment to every row;
+* `&AGGREGATOR` is a pointer to a variable that is available during the aggregation loop, and
+* `func(key string, value string)` is a passing function performing the actual aggregation.
+
+Returns:
+
+* An `int` with the counting result;
+* In addition, the `&AGGREGATOR` provides the actual aggregation values.
+
+Example:
+```
+	//
+	// SELECT ... COUNT(*) AS legs FROM Animal WHERE LEN(name)>6 OR Beak;
+	//
+	legs := 0
+	quantity := db.CountWhereAggreg(Animal{}, hasLongNameOrBeak, &legs, func(id string, a Animal) { legs += a.Legs })
+
+	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
+	// quantity == 3 and legs == 11
+	fmt.Printf("Simpler, COUNT: %v; SUM(Legs): %v.\n", quantity, legs)
+```
+
+### CountWhere()
+
+Syntax: `CountWhere(EMPTY_STRUCT, func(T Table) bool [, PREFIX [, SUFFIX] ])`, where:
+
+* `func(T Table) bool` is a passing function performing the actual WHERE assessment to every row.
+
+Returns: An `int` with the counting result.
+
+Example:
+```
 	// Just db.Count() without aggregation, using a WHERE clause:
 	//
 	// SELECT ... COUNT(*) AS legs FROM Animal WHERE LEN(name)>6 OR Beak;
@@ -335,31 +453,50 @@ func main() {
 
 	// map[ant:{Woody 5 true} chicken:{Clotilde 2 true} dog:{Wallander, Mortimer 4 false}]
 	// quantity == 5 and legs == 16
-	fmt.Printf("COUNT WHERE: %v.\n", quantity)
+	fmt.Printf("COUNT WHERE: %v.\n", quantity)	
+```
 
-	// Simplest COUNT:
-	//
-	// SELECT ... COUNT(*) FROM Animal;
-	//
-	quantity = db.Count(Animal{})
-	// map[ant:{Woody 5 true} cat:{Watson 3 false} chicken:{Clotilde 2 true} dinosaur:{Barney 2 false} dog:{Wallander, Mortimer 4 false}]
-	// quantity == 5
-	fmt.Printf("Bare COUNT: %v.\n", quantity)
+### Sum()
 
+Syntax: `Sum(EMPTY_STRUCT, "FIELD_NAME" [, PREFIX [, SUFFIX] ])`, where "FIELD_NAME" is a sum-able field which will be obtained by reflection.
+
+Returns: The type T (corresponding to the field) sum result.
+
+Example:
+```
 	// Addition: SQL SUM is db.Sum()
 	//
 	// SELECT SUM(Legs) FROM Animal;
 	//
 	quantLegs := db.Sum(Animal{}, "Legs")
 	fmt.Printf("SUM: %v.\n", quantLegs)
+```
 
+### SumWhere()
+
+Syntax: `SumWhere(EMPTY_STRUCT, "FIELD_NAME", func(T Table) bool [, PREFIX [, SUFFIX] ])`, where:
+
+* "FIELD_NAME" is a sum-able field which will be obtained by reflection;
+* `func(T Table) bool` is a passing function performing the actual WHERE assessment to every row.
+
+Returns: An `int` with the counting result.
+
+Example:
+```
 	// SUM WHERE
 	//
 	// SELECT SUM(Legs) FROM Animal WHERE LEN(name)>6 OR Beak;
 	//
 	quantLegs = db.SumWhere(Animal{}, "Legs", hasLongNameOrBeak)
 	fmt.Printf("SUM WHERE: %v.\n", quantLegs)
+```
 
+### Delete()
+
+Syntax: `Delete(ID, EMPTY_STRUCT [, PREFIX [, SUFFIX] ])`
+
+Example:
+```
 	// db.Delete function
 	//
 	// DELETE FROM Person WHERE ID="p0926";
@@ -371,5 +508,4 @@ func main() {
 
 	remaining := db.SelectAll(Person{})
 	fmt.Println("Remaining after delete:", remaining)
-}
 ```
