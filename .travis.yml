@@ -1,9 +1,7 @@
 language: go
+os: linux
 go:
-  - "1.18"
   - "1.19"
-  - stable
-  - master
 arch:
   - amd64
 git:
@@ -13,6 +11,8 @@ before_install:
 before_script:
   - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.37.1
 script:
+  # https://github.com/golangci/golangci-lint/pull/620/files
+  - go mod download
   - golangci-lint run
   - go test -v -covermode=count -coverprofile=profile.cov
 after_success:
