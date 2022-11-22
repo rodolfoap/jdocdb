@@ -9,6 +9,7 @@ git:
 before_install:
   - go get github.com/rodolfoap/gx
 script:
+  - export BDEBUG=1
   - go test -v -covermode=count -coverprofile=profile.cov
 after_success:
   - $GOPATH/bin/goveralls -coverprofile=profile.cov -service=circle-ci
